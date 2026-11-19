@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="行测成长记示例">
+  <meta name="theme-color" content="#2f3e8f">
+  <title>行测成长记 · 示例</title>
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --card: #fff;
+      --ink: #1c1c1a;
+      --muted: #6b6a66;
+      --line: #e6e4de;
+      --accent: #2f3e8f;
+      --good: #1f7a4d;
+      --bad: #b42318;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    body { padding: 20px 16px calc(24px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; }
+    header { margin-bottom: 16px; }
+    .kicker { color: var(--muted); font-size: 12px; letter-spacing: .08em; }
+    h1 { font-size: 22px; font-weight: 600; margin: 4px 0 8px; }
+    .note { background: #eef0f8; color: #2f3e8f; border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .level { font-size: 36px; font-weight: 600; letter-spacing: -0.03em; }
+    .level span { font-size: 16px; font-weight: 500; margin-left: 8px; color: var(--accent); }
+    .scores { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 12px; font-size: 14px; }
+    .scores b { float: right; font-weight: 600; }
+    button, .opt {
+      display: block; width: 100%; text-align: left; border: 1px solid var(--line);
+      background: #fff; border-radius: 12px; padding: 12px 14px; font: inherit; color: inherit;
+      margin-top: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); text-align: center; font-weight: 500; }
+    button.ghost { text-align: center; background: transparent; }
+    .opt.picked { border-color: var(--accent); background: #eef0f8; }
+    .opt.good { border-color: var(--good); background: #e8f6ee; color: var(--good); }
+    .opt.bad { border-color: var(--bad); background: #fdecea; color: var(--bad); }
+    .hidden { display: none; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .result { font-size: 28px; font-weight: 600; }
+    .q-nav { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="kicker">示例页面</div>
+    <h1>行测成长记</h1>
+  </header>
+  <div class="note">这是一个超简单的示例，用来确认电脑和手机都能打开。数据是演示用的，不是你的真实成绩。</div>
+
+  <section id="home">
+    <div class="card">
+      <div class="meta">当前水平</div>
+      <div class="level">76.2<span>高分</span></div>
+      <div class="meta">最近 5 套卷平均分</div>
+    </div>
+    <div class="card">
+      <div class="meta" style="margin-bottom:8px;">五维分数</div>
+      <div class="scores">
+        <div>政治理论 <b>80</b></div>
+        <div>数量关系 <b>65</b></div>
+        <div>逻辑判断 <b>76</b></div>
+        <div>资料分析 <b>80</b></div>
+        <div>言语理解 <b>75</b></div>
+      </div>
+    </div>
+    <button class="primary" id="start">试一下重做错题</button>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <div class="q-nav" id="progress"></div>
+    <div class="card">
+      <div id="stem"></div>
+      <div id="options"></div>
+    </div>
+    <button class="primary" id="next">下一题</button>
+  </section>
+
+  <section id="result" class="hidden">
+    <div class="card">
+      <div class="meta">本次练习</div>
+      <div class="result" id="score"></div>
+      <div class="meta" id="detail"></div>
+    </div>
+    <div id="review"></div>
+    <button class="primary" id="again">再做一遍</button>
+    <button class="ghost" id="back">返回总览</button>
+  </section>
+
+  <script>
+    const QUESTIONS = [
+      {
+        stem: "这段文字意在说明：科技创新应当服务于社会发展。据此，最可能的主旨是？",
+        options: ["A. 科技发展可以不考虑社会需求", "B. 科技创新应立足社会需要", "C. 社会发展依赖于政策支持", "D. 基础研究比应用研究更重要"],
+        answer: "B",
+        note: "复盘笔记：抓住‘应当服务于’这句，选项要对应‘立足社会需要’。"
+      },
+      {
+        stem: "若所有甲都是乙，有些乙是丙，则下列一定正确的是：",
+        options: ["A. 所有甲都是丙", "B. 有些甲是丙", "C. 有些乙不是甲", "D. 有些乙是乙（题干已给出）"],
+        answer: "D",
+        note: "复盘笔记：前两句推不出甲和丙的关系，只能确定‘有些乙是丙’，D 最稳妥。本题仅为演示。"
+      }
+    ];
+
+    let i = 0, picks = [], view = "home";
+
+    const $ = id => document.getElementById(id);
+    function show(id) {
+      ["home", "quiz", "result"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+    }
+
+    function renderQ() {
+      const q = QUESTIONS[i];
+      $("progress").textContent = "第 " + (i + 1) + " / " + QUESTIONS.length + " 题";
+      $("stem").textContent = q.stem;
+      $("options").innerHTML = "";
+      q.options.forEach((text, idx) => {
+        const letter = "ABCD"[idx];
+        const b = document.createElement("button");
+        b.className = "opt" + (picks[i] === letter ? " picked" : "");
+        b.textContent = text;
+        b.onclick = () => { picks[i] = letter; renderQ(); };
+        $("options").appendChild(b);
+      });
+      $("next").textContent = i === QUESTIONS.length - 1 ? "提交" : "下一题";
+    }
+
+    function renderResult() {
+      let right = 0;
+      $("review").innerHTML = "";
+      QUESTIONS.forEach((q, idx) => {
+        const ok = picks[idx] === q.answer;
+        if (ok) right++;
+        const card = document.createElement("div");
+        card.className = "card";
+        const opts = q.options.map((text, j) => {
+          const letter = "ABCD"[j];
+          let cls = "opt";
+          if (letter === q.answer) cls += " good";
+          if (picks[idx] === letter && !ok) cls += " bad";
+          return '<div class="' + cls + '">' + text + "</div>";
+        }).join("");
+        card.innerHTML = "<div class='meta'>第 " + (idx + 1) + " 题 · " + (ok ? "正确" : (picks[idx] ? "错误" : "未答")) + "</div>" +
+          "<p>" + q.stem + "</p>" + opts +
+          "<p class='meta' style='margin-top:10px'>" + q.note + "</p>";
+        $("review").appendChild(card);
+      });
+      $("score").textContent = right + " / " + QUESTIONS.length;
+      $("detail").textContent = "正确率 " + Math.round(right / QUESTIONS.length * 100) + "%";
+    }
+
+    $("start").onclick = () => { i = 0; picks = []; show("quiz"); renderQ(); };
+    $("next").onclick = () => {
+      if (i < QUESTIONS.length - 1) { i++; renderQ(); }
+      else { show("result"); renderResult(); }
+    };
+    $("again").onclick = () => { i = 0; picks = []; show("quiz"); renderQ(); };
+    $("back").onclick = () => show("home");
+  </script>
+</body>
+</html>
