@@ -4,8 +4,11 @@
 
 ## 打开方式
 
-- 手机：用浏览器打开 [https://25550S.github.io/xingce-demo/](https://25550S.github.io/xingce-demo/)（若该地址尚未生效，可用备用页，见下方）。
+- 手机（当前可用）：用浏览器打开  
+  [https://htmlpreview.github.io/?https://github.com/25550S/xingce-demo/blob/main/index.html](https://htmlpreview.github.io/?https://github.com/25550S/xingce-demo/blob/main/index.html)
 - 电脑：同一网址，或打开 OneDrive「行测成长记」文件夹里的 `行测成长记.html`（不需要联网也能用已导入的题）。
+
+正式地址 [https://25550S.github.io/xingce-demo/](https://25550S.github.io/xingce-demo/) 需在仓库 Settings → Pages 将源设为 GitHub Actions 后才会生效（已放好工作流）。
 
 用网页打开时，会自动加载本仓库里的 1 期 12 套题库（含资料材料和答案）。也可以继续用原来的文件夹 / 文件导入作为补充。
 
@@ -18,12 +21,5 @@
 3. 在那边用同一口令导入。文件比本机新时会覆盖本机（后写入的为准）；本机比较新时会提示，不会悄悄覆盖。
 
 文件在导出前就会加密。口令由你在每台设备上自己输入，不会写进本仓库或普通备份。忘记口令后，加密文件无法打开，本机数据和普通备份还在。
-
-## 备用打开方式
-
-如果 GitHub Pages 尚未开通，可试：
-
-- https://htmlpreview.github.io/?https://github.com/25550S/xingce-demo/blob/main/index.html  
-  （题库会从 jsDelivr 等备用地址自动拉取）
 
 本仓库只发布应用和题库，不含任何人的错题本或备份。
