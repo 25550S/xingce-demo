@@ -222,6 +222,31 @@ button,a,.opt,nav button{touch-action:manipulation}
 @media(max-width:720px){
   .qedit-pop{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:min(86vh,680px);border-radius:14px 14px 0 0;padding:14px 16px max(16px,env(safe-area-inset-bottom))}
 }
+/* 当日任务 + 折叠 */
+.fcard{position:relative}.foldb{position:absolute;top:18px;right:20px;font-size:12px;color:#6b6f80;border:1px solid #e3e3de;border-radius:14px;padding:3px 10px;cursor:pointer;background:#fff;white-space:nowrap;font-family:inherit;line-height:1.4;z-index:2}.foldb:hover{border-color:var(--acc);color:var(--acc)}
+.fcard>:first-child{padding-right:78px}.fwrap>.foldb{top:-4px;right:0}
+.fcard.folded>*:not(:first-child):not(.foldb){display:none!important}.card.fcard.folded{padding-top:16px;padding-bottom:16px;align-self:start}.fcard.folded>:first-child{margin-bottom:0!important}.card.fcard.folded .foldb{top:13px}
+.dt-head{justify-content:space-between;flex-wrap:wrap;gap:8px}.dt-head .seg button{white-space:nowrap}#dtCard{margin-bottom:20px}.dt-now{font-size:13px}
+.dt-grid{display:grid;grid-template-columns:minmax(330px,400px) 1fr;gap:24px;margin-top:16px}
+.dt-en{display:flex;align-items:flex-start;gap:6px;margin-bottom:10px}.dt-en>#dtEnergy{flex:1}#dtMascot:empty{display:none}
+.dt-big{font-size:44px;font-weight:700;color:var(--acc);line-height:1;font-variant-numeric:tabular-nums}
+.dt-tk{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:14px}
+.dt-tk .dt-t{color:var(--mut);width:88px;flex:none;font-variant-numeric:tabular-nums;font-size:13px}.dt-tk .dt-n{flex:1;min-width:0}
+.dt-ck{width:19px;height:19px;flex:none;border:1.5px solid var(--line);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;background:#fff;cursor:pointer;padding:0;color:#fff}
+.dt-ck.on{background:var(--acc);border-color:var(--acc)}.dt-tk.done .dt-n{color:var(--mut);text-decoration:line-through}
+.dt-tk.nowk{background:#fffaf2;margin:0 -8px;padding:9px 8px;border-radius:8px}
+.dt-tg{font-size:12px;padding:2px 8px;border-radius:10px;background:var(--acc2);color:var(--acc);flex:none;white-space:nowrap}.dt-tg.lt{background:#eef4f0;color:var(--ok)}.dt-tg.rs{background:#fdf3e7;color:#a8661c}
+.dt-ic{border:none;background:none;color:#a0a4aa;cursor:pointer;font-size:14px;padding:2px 3px;flex:none}.dt-ic:hover{color:var(--acc)}
+.dly{display:block;font-size:12px;color:#a8661c;text-decoration:none}.dly.ok{color:var(--ok)}
+.dt-tpl{gap:6px;margin-top:12px;flex-wrap:wrap}.dt-chip{font-size:12px;border:1px solid var(--line);border-radius:14px;padding:3px 10px;background:#fff;color:var(--mut);cursor:pointer;font-family:inherit}.dt-chip:hover{border-color:var(--acc);color:var(--acc)}
+.dt-add{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}.dt-add input,.dt-add select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;background:#fff;font-family:inherit}
+.dt-add input[type=time]{width:112px}.dt-add .dt-name{flex:1;min-width:110px}.dt-lk{gap:4px;align-items:center}.dt-lk input{width:58px}.dt-fx{font-size:12px;display:inline-flex;align-items:center;gap:3px}
+.dt-warn{margin-top:12px;font-size:13px;color:var(--bad);background:#fbefee;padding:8px 10px;border-radius:8px}
+.dt-svg{width:100%;height:auto;display:block;font-size:11px;fill:#6b7078}
+.dt-lg{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);margin-top:6px}.dt-lg i{display:inline-block;width:18px;height:0;border-top:2px solid var(--acc);vertical-align:middle;margin-right:6px}.dt-lg i.d{border-top:2px dashed #9aa3c8}
+.dt-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.dt-sum div{background:#fafaf8;border:1px solid var(--line2);border-radius:10px;padding:10px 12px}.dt-sum b{display:block;font-size:19px;color:var(--txt);margin-top:2px}.dt-sum span{font-size:12px;color:var(--mut)}
+@media(max-width:980px){.dt-grid{grid-template-columns:1fr}}
+@media(max-width:720px){.dt-sum{grid-template-columns:repeat(2,1fr)}.dt-big{font-size:38px}.dt-tk{display:grid;grid-template-columns:22px 1fr auto auto auto auto;column-gap:6px;row-gap:3px;align-items:center}.dt-tk .dt-ck{grid-row:1/3;align-self:start;margin-top:2px}.dt-tk .dt-t{grid-column:2;grid-row:1;width:auto}.dt-tk .dt-n{grid-column:2/-1;grid-row:2}.dt-head .seg button{padding:5px 10px}.fcard>:first-child{padding-right:70px}.foldb{top:14px;right:14px}#dtCard{overflow-x:visible}}
 </style></head><body>
 <header>
   <h1>行测<span>成长记</span></h1>
@@ -239,17 +264,35 @@ button,a,.opt,nav button{touch-action:manipulation}
   <div class="row" style="justify-content:space-between;margin-bottom:16px"><h2 style="margin:0;font-size:18px;font-weight:600">总览</h2><div class="row"><button class="btn sec" id="h_copy">复制摘要</button><button class="btn" id="h_pkg">发给助手</button></div></div>
   <div id="backupBanner"></div>
   <div class="mut" id="syncBar" style="margin:8px 0 16px"></div>
+  <div class="card fcard" data-fk="day" id="dtCard">
+    <div class="row dt-head" id="dtHead"></div>
+    <div class="dt-grid">
+      <div class="dt-left">
+        <div class="dt-en"><div id="dtEnergy"></div><div id="dtMascot"></div></div>
+        <div id="dtList"></div>
+        <div id="dtOver"></div>
+        <div class="row dt-tpl"><span class="mut" style="font-size:12px">模板</span><button type="button" class="dt-chip" id="dt_tpl1">＋ 套卷 2h 高强度</button><button type="button" class="dt-chip" id="dt_tpl2">＋ 复盘 1h 轻松</button></div>
+        <div class="dt-add" id="dtAdd"><input type="time" id="dt_s" value="19:00" aria-label="开始"><span class="mut">–</span><input type="time" id="dt_e" value="20:00" aria-label="结束"><input id="dt_n" placeholder="任务名称" class="dt-name"><select id="dt_k" aria-label="强度"><option value="hi">高强度</option><option value="lt">轻松</option><option value="rs">休息</option><option value="lk">错题组卷</option></select><span id="dt_lkBox" class="dt-lk" style="display:none"><select id="dt_lm" aria-label="模块"></select><input type="number" id="dt_ln" value="20" min="1" max="200" aria-label="题数"><span class="mut">题</span></span><label class="mut dt-fx"><input type="checkbox" id="dt_fx">固定</label><button type="button" class="btn" id="dt_addBtn">添加</button><button type="button" class="btn sec" id="dt_cancel" style="display:none">取消</button></div>
+        <div id="dtWarn"></div>
+      </div>
+      <div class="dt-right"><div id="dtChart"></div>
+        <div class="dt-lg"><span><i></i>实际（已完成 + 进行中）</span><span><i class="d"></i>计划预估</span></div>
+        <div class="dt-lg mut" id="dtRule" style="margin-top:4px"></div>
+        <div class="dt-sum" id="dtSum"></div>
+      </div>
+    </div>
+  </div>
   <div class="grid g-home">
-    <div class="card" id="levelCard"></div>
-    <div class="card"><h2>五维能力</h2>
+    <div class="card fcard" data-fk="level" id="levelCard"></div>
+    <div class="card fcard" data-fk="dim"><h2>五维能力</h2>
       <div class="grid g2" style="align-items:center;gap:28px"><div id="radar"></div><div id="dimList"></div></div>
     </div>
   </div>
-  <div class="card" style="margin-top:20px" id="dueCard"></div>
-  <div class="card" style="margin-top:20px" id="focusCard"></div>
-  <div class="card" style="margin-top:20px"><h2>总分走势</h2><div id="trend"></div></div>
-  <div class="card" style="margin-top:20px"><h2>进步曲线 <span class="mut" style="font-weight:400">（每套卷登记时的五维分数）</span></h2><div id="progress"></div></div>
-  <div style="margin-top:20px"><p class="sec-t">分项明细</p><div class="grid g3" id="breakdown"></div></div>
+  <div class="card fcard" data-fk="due" style="margin-top:20px" id="dueCard"></div>
+  <div class="card fcard" data-fk="focus" style="margin-top:20px" id="focusCard"></div>
+  <div class="card fcard" data-fk="trend" style="margin-top:20px"><h2>总分走势</h2><div id="trend"></div></div>
+  <div class="card fcard" data-fk="prog" style="margin-top:20px"><h2>进步曲线 <span class="mut" style="font-weight:400">（每套卷登记时的五维分数）</span></h2><div id="progress"></div></div>
+  <div class="fcard fwrap" data-fk="bd" style="margin-top:20px"><p class="sec-t">分项明细</p><div class="grid g3" id="breakdown"></div></div>
 </section>
 
 <section class="tab" id="t-papers">
@@ -371,6 +414,19 @@ button,a,.opt,nav button{touch-action:manipulation}
   </div>
   <div class="card" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h2 style="margin:0">错因技巧表（通用技巧）</h2><div class="row"><button class="btn sec sm" id="s_tipAdd">添加一行</button><button class="btn sec sm" id="s_tipReset">恢复默认</button></div></div>
     <p class="mut">错因名称包含左边的关键词，就显示右边的通用技巧（从上往下匹配第一条）。修改后自动保存。</p><div id="s_tips"></div></div>
+  <div class="card" style="margin-top:20px"><h2>精力规则（当日任务）</h2>
+    <p class="mut">每天 06:00 精力为 100，按每小时的变化计算。负数是消耗，正数是恢复（最多回到 100）。</p>
+    <div class="form grid g3 dt-cfg">
+      <label>空闲（每小时）<input type="number" step="0.5" id="en_idle"></label>
+      <label>轻松（每小时）<input type="number" step="0.5" id="en_lt"></label>
+      <label>高强度（每小时）<input type="number" step="0.5" id="en_hi"></label>
+      <label>休息（每小时恢复）<input type="number" step="0.5" id="en_rs"></label>
+      <label>同一任务第 3 小时起每小时再扣<input type="number" step="0.5" id="en_long"></label>
+      <label>精力低于多少时消耗加快<input type="number" step="1" id="en_lowAt"></label>
+      <label>加快倍数<input type="number" step="0.1" id="en_lowX"></label>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="en_save">保存精力规则</button><button class="btn sec" id="en_reset">恢复默认</button></div>
+  </div>
 </section>
 
 <section class="tab help" id="t-help"><div class="card">
@@ -492,16 +548,16 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function load(k,d){try{var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}catch(e){return d}}
 var QUIET=false;
 function save(k,fast){localStorage.setItem(P+k,JSON.stringify(S[k]));if(!QUIET&&k!=='meta'&&typeof bumpSync==='function')bumpSync(!!fast)}
-function saveAll(){['settings','papers','errbooks','meta','ans','redo','marks','mast','qedit'].forEach(save)}
+function saveAll(){['settings','papers','errbooks','meta','ans','redo','marks','mast','qedit','day','ui'].forEach(save)}
 function normMarks(m){m=m&&typeof m==='object'?m:{};return{tags:Array.isArray(m.tags)&&m.tags.length?m.tags:['易混','再看'],m:m.m&&typeof m.m==='object'?m.m:{}}}
 function normSettings(o){o=o&&typeof o==='object'?o:{};var s=Object.assign({},DEF_RULE);['recentN','threshold','perError','maxDeduct','zx','alias','rangeCheck','exclM'].forEach(function(k){if(o[k]!=null&&o[k]!=='')s[k]=o[k]});
  if(o.maxDeduct===15&&!o.v2)s.maxDeduct=10;
  s.layout=clone(DEF_LAYOUT);if(o.layout)MODS.forEach(function(m){if(o.layout[m.k])Object.assign(s.layout[m.k],o.layout[m.k])});
- if(s.zx==='片段刷题,600题,专项')s.zx=DEF_RULE.zx;s.tiers=Array.isArray(o.tiers)&&o.tiers.length?o.tiers:clone(DEF_TIERS);s.tips=Array.isArray(o.tips)?o.tips:null;s.tipDays=o.tipDays||30;s.v2=true;return s}
+ if(s.zx==='片段刷题,600题,专项')s.zx=DEF_RULE.zx;s.tiers=Array.isArray(o.tiers)&&o.tiers.length?o.tiers:clone(DEF_TIERS);s.tips=Array.isArray(o.tips)?o.tips:null;s.tipDays=o.tipDays||30;s.en=normEn(o.en);s.v2=true;return s}
 function normPapers(ps){if(!Array.isArray(ps))return[];return ps.filter(function(p){return p&&typeof p==='object'}).map(function(p){var q={id:p.id||uid(),name:String(p.name||'未命名'),date:p.date||'',note:p.note||'',file:p.file||'',mods:{}};
  MODS.forEach(function(m){var v=p.mods&&p.mods[m.k];if(v){q.mods[m.k]={t:+v.t||0,s:v.s!=null?+v.s:DEF_LAYOUT[m.k].s,man:v.man!=null?+v.man:(v.c!=null?+v.c:null)}}else if(!p.mods||!Object.keys(p.mods).some(function(k){return p.mods[k]&&p.mods[k].c!=null})){q.mods[m.k]={t:0,s:DEF_LAYOUT[m.k].s,man:null}}else q.mods[m.k]={t:0,s:DEF_LAYOUT[m.k].s,man:null}});return q})}
 function normEb(e){var o={};EBM.forEach(function(m){o[m.k]=(e&&e[m.k]&&typeof e[m.k]==='object')?e[m.k]:{}});return o}
-function init(){QUIET=true;S.settings=normSettings(load('settings',{}));S.papers=normPapers(load('papers',[]));S.errbooks=normEb(load('errbooks',{}));S.meta=load('meta',{})||{};S.ans=load('ans',{})||{};S.redo=load('redo',[]);if(!Array.isArray(S.redo))S.redo=[];S.marks=normMarks(load('marks',null));S.mast=normObj(load('mast',{}));S.qedit=normQedit(load('qedit',{}));saveAll();QUIET=false}
+function init(){QUIET=true;S.settings=normSettings(load('settings',{}));S.papers=normPapers(load('papers',[]));S.errbooks=normEb(load('errbooks',{}));S.meta=load('meta',{})||{};S.ans=load('ans',{})||{};S.redo=load('redo',[]);if(!Array.isArray(S.redo))S.redo=[];S.marks=normMarks(load('marks',null));S.mast=normObj(load('mast',{}));S.qedit=normQedit(load('qedit',{}));S.day=normDay(load('day',{}));S.ui=normUi(load('ui',{}));saveAll();QUIET=false}
 function normObj(o){return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}
 function normQedit(m){var o={},k;m=m&&typeof m==='object'&&!Array.isArray(m)?m:{};for(k in m){if(!Object.prototype.hasOwnProperty.call(m,k))continue;var v=m[k];if(!v||typeof v!=='object')continue;var opts=Array.isArray(v.o)?v.o.slice(0,4):['','','',''];while(opts.length<4)opts.push('');o[k]={s:v.s!=null?String(v.s):'',o:opts.map(function(x){return x==null?'':String(x)}),at:v.at||''}}return o}
 function $(id){return document.getElementById(id)}
@@ -739,7 +795,7 @@ function renderFormulaHelp(){var s=S.settings;$('formulaHelp').innerHTML=
  '<li><b>五维基础分</b>（政治理论、数量关系、逻辑判断、资料分析、言语理解）= 最近 '+s.recentN+' 套含该模块的套卷正确率加权平均 × 100。最新一套权重 '+s.recentN+'，往前依次减 1。</li>'+
  '<li><b>错题扣分</b>（政治理论不扣）：只看这几套卷里、来源属于套卷的错题。同一考点错 ≥'+s.threshold+' 道，扣 '+s.perError+' ×（错题数 − '+s.threshold+' + 1）分；所有考点合计最多扣 '+s.maxDeduct+' 分。'+(s.exclM!==false?'已掌握的错题（连续 2 次重做做对且没看答案，或手动标记）不计入扣分。':'已掌握的错题也照常计入扣分。')+'最终分 = 基础分 − 错题扣分，不低于 0。</li>'+
  '<li>专项练习（如片段刷题、600题）的错题只在错题统计里显示，不影响分数。没有数据时显示「暂无数据」。</li>'}
-function doExport(){var data={app:'行测成长记',version:3,exportedAt:new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit};
+function doExport(){var data={app:'行测成长记',version:3,exportedAt:new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit,day:S.day,ui:S.ui};
  var blob=new Blob([JSON.stringify(data)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='行测成长记备份_'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);
  S.meta.lastBackup=today();save('meta');renderAll();toast('已下载「行测成长记备份_'+today()+'.json」，请拖进 OneDrive')}
 function bindSettings(){$('s_save').onclick=function(){var s=S.settings;[['recentN',1,30],['threshold',1,50],['perError',0,20],['maxDeduct',0,100],['tipDays',1,365]].forEach(function(x){var v=num($('s_'+x[0]).value);if(v==null)v=x[0]==='tipDays'?30:DEF_RULE[x[0]];s[x[0]]=Math.max(x[1],Math.min(x[2],v))});
@@ -753,7 +809,7 @@ function bindSettings(){$('s_save').onclick=function(){var s=S.settings;[['recen
  $('s_export').onclick=function(){doExport()};
  $('s_import').onclick=function(){$('s_importFile').click()};
  $('s_importFile').onchange=function(){var f=$('s_importFile').files[0];if(!f)return;f.text().then(function(t){var d=JSON.parse(t);if(d.app!=='行测成长记')throw new Error('不是行测成长记的备份文件');if(!confirm('导入会覆盖当前所有数据，确定吗？'))return;
-  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);saveAll();if(typeof bumpSync==='function')bumpSync(true);renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
+  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);if(d.day)S.day=normDay(d.day);if(d.ui)S.ui=normUi(d.ui);saveAll();if(typeof bumpSync==='function')bumpSync(true);renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
  $('s_clear').onclick=function(){if(!confirm('确定清空全部数据？建议先导出备份。'))return;if(prompt('请输入「清空」两个字确认')!=='清空')return;var tok=null,gid=null;try{tok=localStorage.getItem(P+'gh_token');gid=localStorage.getItem(P+'gh_gist_id')}catch(e){}Object.keys(localStorage).forEach(function(k){if(k.indexOf(P)===0)localStorage.removeItem(k)});try{if(tok)localStorage.setItem(P+'gh_token',tok);if(gid)localStorage.setItem(P+'gh_gist_id',gid)}catch(e){}SYNC_ST={msg:'',ok:null,at:''};qbClear();init();detailId=null;editing=null;renderPaperForm(null);renderAll();toast(tok?'已清空本机数据。云端备份还在，点「立即同步」可以拉回来。':'已清空')}}
 
 // ---------- 题库（IndexedDB）与答案 ----------
@@ -982,7 +1038,7 @@ function submit(){var un=SES.items.length-Object.keys(SES.ch).length;if(un&&!con
  var items=SES.items.map(function(it,i){return{key:it.key,paper:it.paper,q:it.q,aq:it.aq,mod:it.mod,grp:it.grp,kd:it.kd,cause:it.cause,note:it.note,qt:it.qt,np:!!it.np,ans:it.ans,ch:SES.ch[i]||'',t:SES.t[i]||0,rev:!!SES.rev[i]}});
  var graded=items.filter(function(x){return x.ans}),cor=graded.filter(function(x){return x.ch===x.ans}).length;
  var att={id:SES.id,at:new Date().toISOString(),label:SES.label,n:items.length,graded:graded.length,cor:cor,time:items.reduce(function(a,x){return a+x.t},0),items:items};
- S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo',true);SES.att=att;renderResult();if(typeof flushDeferredSync==='function')flushDeferredSync()}
+ S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo',true);SES.att=att;try{dtOnSubmit(att)}catch(e){}renderResult();if(typeof flushDeferredSync==='function')flushDeferredSync()}
 function showAttempt(id){var a=S.redo.filter(function(x){return x.id===id})[0];if(!a)return;SES={done:true,att:a,label:a.label,items:a.items};$('practice').style.display='block';document.body.style.overflow='hidden';renderResult()}
 function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x.ch}).length;var acc=a.graded?Math.round(a.cor/a.graded*1000)/10:null;
  var h='<div class="prbar"><div><b>'+esc(a.label)+'</b><span class="mut"> · '+new Date(a.at).toLocaleString('zh-CN')+'</span></div><div></div><div class="row"><button class="btn sec" id="rs_wrong">重做本次错题</button><button class="btn" id="rs_close">完成</button></div></div>';
@@ -1134,7 +1190,7 @@ function renderTips(){var el=$('s_tips');if(!el)return;var t=S.settings.tips||DE
 
 // ---------- 总控 ----------
 function go(t){if(t==='papers'&&!editing)renderPaperForm(null);[].forEach.call(document.querySelectorAll('#nav button'),function(b){b.classList.toggle('on',b.dataset.t===t)});[].forEach.call(document.querySelectorAll('.tab'),function(s){s.classList.toggle('on',s.id==='t-'+t)});renderAll();window.scrollTo(0,0)}
-function renderAll(){renderHome();renderDue();renderFocus();renderSync();renderPapers();renderErrs();renderSettings();renderFormulaHelp();renderRedoTab();if(!editing)updForm()}
+function renderAll(){renderHome();renderDay();renderDue();renderFocus();renderEnCfg();renderSync();renderPapers();renderErrs();renderSettings();renderFormulaHelp();renderRedoTab();if(!editing)updForm();applyFold()}
 
 function isHttp(){return location.protocol==='http:'||location.protocol==='https:'}
 var TIKU_REPO='25550S/xingce-demo';
@@ -1184,13 +1240,13 @@ function looksLikeToken(t){t=String(t||'').trim();return /^(ghp_|github_pat_|gho
 function localUpdatedAt(){return(S.meta&&(S.meta.updatedAt||S.meta.localAt))||''}
 function bumpSync(fast){if(QUIET)return;S.meta=S.meta||{};S.meta.updatedAt=new Date().toISOString();S.meta.localAt=S.meta.updatedAt;try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}setDirty(true);scheduleSync(fast)}
 function scheduleSync(fast){if(!getToken())return;if(fast)SYNC_FAST=true;var ms=SYNC_FAST?300:1500;if(SYNC_TIMER)clearTimeout(SYNC_TIMER);SYNC_TIMER=setTimeout(function(){SYNC_TIMER=null;SYNC_FAST=false;syncNow({trigger:'edit'})},ms)}
-function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
+function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit,day:S.day,ui:S.ui,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
 function dataScore(o){if(arguments.length===0)o=S;if(!o)return 0;if(o.data&&(o.papers==null))o=o.data;var n=(o.papers||[]).length+(Array.isArray(o.redo)?o.redo.length:0),eb=o.errbooks||o.errBooks||{};Object.keys(eb).forEach(function(m){var files=eb[m]||{};Object.keys(files).forEach(function(fn){n+=((files[fn]||{}).rows||[]).length})});return n}
-function hasUserData(p){if(!p)return false;if(dataScore(p)>0)return true;if((p.papers||[]).length||(Array.isArray(p.redo)&&p.redo.length))return true;if(p.marks&&p.marks.m&&typeof p.marks.m==='object'&&Object.keys(p.marks.m).length)return true;if(p.mast&&typeof p.mast==='object'&&Object.keys(p.mast).length)return true;if(p.qedit&&typeof p.qedit==='object'&&Object.keys(p.qedit).length)return true;return false}
-function lsUserPack(){try{function rd(k,d){var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}var meta=rd('meta',{})||{};return{app:'行测成长记',version:3,updatedAt:meta.updatedAt||meta.localAt||'',settings:rd('settings',null),papers:rd('papers',[]),errbooks:rd('errbooks',{}),ans:rd('ans',{}),redo:rd('redo',[]),marks:rd('marks',null),mast:rd('mast',{}),qedit:rd('qedit',{}),meta:{lastBackup:meta.lastBackup||''}}}catch(e){return null}}
+function hasUserData(p){if(!p)return false;if(dataScore(p)>0)return true;if((p.papers||[]).length||(Array.isArray(p.redo)&&p.redo.length))return true;if(p.marks&&p.marks.m&&typeof p.marks.m==='object'&&Object.keys(p.marks.m).length)return true;if(p.mast&&typeof p.mast==='object'&&Object.keys(p.mast).length)return true;if(p.qedit&&typeof p.qedit==='object'&&Object.keys(p.qedit).length)return true;if(dayHas(p.day))return true;return false}
+function lsUserPack(){try{function rd(k,d){var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}var meta=rd('meta',{})||{};return{app:'行测成长记',version:3,updatedAt:meta.updatedAt||meta.localAt||'',settings:rd('settings',null),papers:rd('papers',[]),errbooks:rd('errbooks',{}),ans:rd('ans',{}),redo:rd('redo',[]),marks:rd('marks',null),mast:rd('mast',{}),qedit:rd('qedit',{}),day:rd('day',{}),ui:rd('ui',{}),meta:{lastBackup:meta.lastBackup||''}}}catch(e){return null}}
 function combineLocal(a,b){if(!hasUserData(a))return b||a;if(!hasUserData(b))return a||b;return mergePack(a,b)}
 function captureLocal(startPack){return combineLocal(combineLocal(startPack,syncPack()),lsUserPack())}
-function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
+function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);if(d.day)S.day=normDay(d.day);if(d.ui)S.ui=normUi(d.ui);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
 var SYNC_DEFER=false;
 function sessionBlocksPull(){return !!(SES&&!SES.done)}
 function loadSnaps(){try{var v=JSON.parse(lsGet(LS_SNAP)||'[]');return Array.isArray(v)?v.filter(function(x){return x&&x.pack&&typeof x.pack==='object'}):[]}catch(e){return []}}
@@ -1226,7 +1282,7 @@ function mergeQedit(a,b){a=normQedit(a);b=normQedit(b);var o={},keys={};Object.k
 function mergePack(localPack,cloudPack){var lt=localPack&&localPack.updatedAt||'',ct=cloudPack&&cloudPack.updatedAt||'';
  var newer,older;if(ct&&(!lt||ct>lt)){newer=cloudPack;older=localPack}else{newer=localPack;older=cloudPack}
  newer=newer||{};older=older||{};
- return{app:'行测成长记',version:3,updatedAt:new Date().toISOString(),settings:newer.settings||older.settings,papers:mergePapers(newer.papers,older.papers),errbooks:mergeErrbooks(newer.errbooks||newer.errBooks,older.errbooks||older.errBooks),ans:mergeAns(newer.ans,older.ans),redo:mergeRedo(newer.redo,older.redo),marks:mergeMarks(newer.marks,older.marks),mast:unionMap(newer.mast,older.mast),qedit:mergeQedit(localPack&&localPack.qedit,cloudPack&&cloudPack.qedit),meta:mergeMeta(newer.meta,older.meta)}}
+ return{app:'行测成长记',version:3,updatedAt:new Date().toISOString(),settings:newer.settings||older.settings,papers:mergePapers(newer.papers,older.papers),errbooks:mergeErrbooks(newer.errbooks||newer.errBooks,older.errbooks||older.errBooks),ans:mergeAns(newer.ans,older.ans),redo:mergeRedo(newer.redo,older.redo),marks:mergeMarks(newer.marks,older.marks),mast:unionMap(newer.mast,older.mast),qedit:mergeQedit(localPack&&localPack.qedit,cloudPack&&cloudPack.qedit),day:mergeDay(newer.day,older.day),ui:mergeUi(newer.ui,older.ui),meta:mergeMeta(newer.meta,older.meta)}}
 function fmtSyncTime(iso){if(!iso)return'';var d=new Date(iso);if(isNaN(d.getTime()))return'';var n=new Date(),same=d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
  return same?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function setSyncSt(ok,msg){SYNC_ST={ok:ok,msg:msg,at:new Date().toISOString()};var a=$('syncBar'),b=$('s_syncSt');if(a)a.innerHTML=syncBarHtml();if(b)b.innerHTML=syncStHtml();bindSyncBar()}
@@ -1306,7 +1362,119 @@ function bindSync(){if(!$('s_syncGo'))return;
  $('s_syncOff').onclick=function(){lsSet(LS_TOK,'');lsSet(LS_GIST,'');lsSet(LS_CLOUD,'');lsSet(LS_DIRTY,'');if($('s_syncTok'))$('s_syncTok').value='';setSyncSt(true,'已在本机断开同步。云端私有空间还在，本机数据也还在。重新粘贴同一把钥匙即可继续同步。');renderSync()};
  if($('s_syncRestore'))$('s_syncRestore').onclick=function(){renderSnapList(true)};
  if(!bindSync._ev){bindSync._ev=1;document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')maybeAuto('resume')});window.addEventListener('focus',function(){maybeAuto('resume')});window.addEventListener('online',function(){maybeAuto('online')})}}
-window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_questionOf:questionOf,_qeditKey:qeditKey,_qeditOpen:qeditIsOpen,_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
+// ---------- 当日任务 + 精力曲线 ----------
+var DEF_EN={idle:-2,lt:-5,hi:-10,rs:15,long:2,lowAt:30,lowX:1.5};
+var DT_TAG={hi:['高强度',''],lt:['轻松','lt'],rs:['休息','rs']};
+var DT_VIEW='t',DT_EDIT=null,DT_LINK=null,DT_TIMER=null;
+function normEn(o){var s=Object.assign({},DEF_EN);o=o&&typeof o==='object'?o:{};Object.keys(DEF_EN).forEach(function(k){var v=num(o[k]);if(v!=null)s[k]=v});return s}
+function normTask(t){if(!t||typeof t!=='object'||!t.id)return null;var o={id:String(t.id),n:String(t.n||''),k:DT_TAG[t.k]?t.k:'hi',os:+t.os||0,oe:+t.oe||0,fx:!!t.fx,lk:t.lk&&typeof t.lk==='object'?{m:String(t.lk.m||''),n:Math.max(1,+t.lk.n||10)}:null,ext:+t.ext||0,ps:t.ps!=null?+t.ps:null,done:!!t.done,ds:t.ds!=null?+t.ds:null,de:t.de!=null?+t.de:null,at:t.at||'',del:!!t.del};if(o.oe<=o.os)o.oe=o.os+15;return o}
+function normDay(d){var o={};d=d&&typeof d==='object'&&!Array.isArray(d)?d:{};var lim=addDays(today(),-30);Object.keys(d).forEach(function(k){if(!/^\d{4}-\d\d-\d\d$/.test(k)||k<lim)return;var m=d[k],x={};if(!m||typeof m!=='object')return;Object.keys(m).forEach(function(id){var t=normTask(m[id]);if(t)x[t.id]=t});if(Object.keys(x).length)o[k]=x});return o}
+function normUi(u){u=u&&typeof u==='object'?u:{};return{fold:u.fold&&typeof u.fold==='object'?u.fold:{},at:u.at||''}}
+function mergeDay(a,b){a=normDay(a);b=normDay(b);var o={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){var x=a[k]||{},y=b[k]||{},m={};Object.keys(x).concat(Object.keys(y)).forEach(function(id){var p=x[id],q=y[id];m[id]=!p?q:!q?p:(parseWhen(p.at)>=parseWhen(q.at)?p:q)});o[k]=m});return o}
+function mergeUi(a,b){a=normUi(a);b=normUi(b);return parseWhen(a.at)>=parseWhen(b.at)?a:b}
+function dayHas(d){return!!(d&&typeof d==='object'&&Object.keys(d).some(function(k){var m=d[k];return m&&Object.keys(m).some(function(id){return m[id]&&!m[id].del})}))}
+function hm(m){m=Math.round(m);var h=Math.floor(m/60),x=m%60;return h+':'+pad(x)}
+function pm(s){var p=String(s||'').split(':');if(p.length<2)return null;var h=+p[0],m=+p[1];if(!isFinite(h)||!isFinite(m))return null;return h*60+m}
+function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes()+d.getSeconds()/60}
+function dtList(date){var m=(S.day||{})[date]||{};return Object.keys(m).map(function(id){return m[id]}).filter(function(t){return t&&!t.del})}
+// 排布：done 用实际时间；固定不动；其余从原计划开始，碰撞才顺延（空档吸收），已开始的钉住开始时间
+function dtLayout(tasks,now){var ts=tasks.filter(function(t){return!t.del}).slice().sort(function(a,b){var sa=a.done?(a.ds!=null?a.ds:a.os):(a.ps!=null?a.ps:a.os),sb=b.done?(b.ds!=null?b.ds:b.os):(b.ps!=null?b.ps:b.os);return sa-sb||a.os-b.os||(a.id<b.id?-1:1)});
+ var fixed=ts.filter(function(t){return t.fx&&!t.done}).map(function(t){return[t.os,t.oe+t.ext]});var cur=0,out=[];
+ ts.forEach(function(t){var dur=t.oe-t.os,s,e;
+  if(t.done){s=t.ds!=null?t.ds:t.os;e=t.de!=null?t.de:t.oe;if(e<s)e=s}
+  else if(t.fx){s=t.os;e=t.oe+t.ext}
+  else{if(t.ps!=null)s=t.ps;else{s=Math.max(t.os,cur);var moved=true,g=0;while(moved&&g++<50){moved=false;fixed.forEach(function(f){if(s<f[1]&&s+dur>f[0]){s=f[1];moved=true}})}}e=s+dur+t.ext}
+  if(!t.fx||t.done)cur=Math.max(cur,e);else cur=Math.max(cur,Math.min(e,cur));
+  var dly=t.done?Math.max(0,(e-s)-dur):t.ext;
+  out.push({t:t,s:s,e:e,dur:dur,sh:t.done||t.fx?0:Math.max(0,s-t.os),dly:dly,run:!t.done&&now!=null&&s<=now&&now<e})});
+ return out}
+// 超时自动延长 15 分（今天）；返回是否改动
+function dtTick(date,now){var m=(S.day||{})[date];if(!m)return false;var ch=false,g=0,iso=new Date().toISOString();
+ while(g++<200){var lay=dtLayout(dtList(date),now),hit=null;lay.forEach(function(x){if(!hit&&!x.t.done&&x.e<=now)hit=x});if(!hit)break;var k=Math.floor((now-hit.e)/15)+1;hit.t.ext+=15*k;hit.t.at=iso;ch=true}
+ dtLayout(dtList(date),now).forEach(function(x){var t=x.t;if(!t.done&&!t.fx&&t.ps==null&&x.s<=now){t.ps=x.s;t.at=iso;ch=true}});
+ return ch}
+function dtRate(lay,m,cfg){var r=cfg.idle;for(var i=0;i<lay.length;i++){var x=lay[i];if(m>=x.s&&m<x.e){r=cfg[x.t.k];if(r<0&&m-x.s>=120)r-=cfg.long;break}}return r}
+function dtEnergy(lay,from,to,v0,cfg){var p=[[from,v0]],v=v0,st=5;for(var m=from;m<to-1e-9;m+=st){var d=Math.min(st,to-m),r=dtRate(lay,m,cfg);if(r<0&&v<cfg.lowAt)r*=cfg.lowX;v=Math.max(0,Math.min(100,v+r*d/60));p.push([m+d,v])}return p}
+function dtCalc(date,isToday){var cfg=S.settings.en||DEF_EN,now=isToday?Math.max(360,Math.min(1440,nowMin())):null,lay=dtLayout(dtList(date),isToday?nowMin():null);
+ var act=isToday?dtEnergy(lay,360,now,100,cfg):[[360,100]],cv=act[act.length-1][1],plan=dtEnergy(lay,isToday?now:360,1440,isToday?cv:100,cfg);
+ var low=null;for(var i=0;i<plan.length;i++)if(plan[i][1]<20){low=plan[i][0];break}
+ return{lay:lay,act:act,plan:plan,cur:cv,end:plan[plan.length-1][1],low:low,now:now}}
+function dtChart(c,isToday){var W=700,H=300,L=36,B=26,X=function(m){return L+(m-360)/1080*(W-L-10)},Y=function(v){return 10+(100-v)/100*(H-B-10)};
+ var s='<svg viewBox="0 0 '+W+' '+H+'" class="dt-svg">';
+ [0,20,40,60,80,100].forEach(function(v){s+='<line x1="'+L+'" x2="'+(W-10)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="'+(v===20?'#f0c9c5':'#f0f0ec')+'"'+(v===20?' stroke-dasharray="4 3"':'')+'/><text x="'+(L-7)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+v+'</text>'});
+ for(var h=6;h<=24;h+=2)s+='<text x="'+X(h*60)+'" y="'+(H-7)+'" text-anchor="middle">'+h+'</text>';
+ c.lay.forEach(function(x){var a=Math.max(360,x.s),b=Math.min(1440,x.e);if(b<=a)return;s+='<rect x="'+X(a)+'" y="10" width="'+(X(b)-X(a))+'" height="'+(H-B-10)+'" fill="'+(x.t.k==='rs'?'#fdf3e7':x.t.k==='lt'?'#eef4f0':'#e9ecf7')+'" opacity=".6"/>';
+  if(x.dly>0){var d0=Math.max(360,x.s+x.dur);if(b>d0)s+='<rect x="'+X(d0)+'" y="10" width="'+(X(b)-X(d0))+'" height="'+(H-B-10)+'" fill="none" stroke="#d9a35a" stroke-dasharray="3 3"/><text x="'+((X(d0)+X(b))/2)+'" y="23" text-anchor="middle" style="fill:#a8661c">延长</text>'}});
+ var pl=function(p){return p.map(function(q){return X(q[0]).toFixed(1)+','+Y(q[1]).toFixed(1)}).join(' ')};
+ s+='<polyline points="'+pl(c.plan)+'" fill="none" stroke="#9aa3c8" stroke-width="2" stroke-dasharray="6 4"/>';
+ if(isToday&&c.act.length>1)s+='<polyline points="'+pl(c.act)+'" fill="none" stroke="#2f3e8f" stroke-width="2.5"/>';
+ if(isToday){var px=X(c.now),py=Y(c.cur);s+='<line x1="'+px+'" x2="'+px+'" y1="10" y2="'+(H-B)+'" stroke="#2f3e8f" opacity=".35"/><circle cx="'+px+'" cy="'+py+'" r="4.5" fill="#2f3e8f"/><text x="'+(px>W-90?px-8:px+8)+'" y="'+(py-8)+'" text-anchor="'+(px>W-90?'end':'start')+'" style="fill:#2f3e8f;font-weight:600;font-size:12px">现在 '+Math.round(c.cur)+'</text>'}
+ return s+'</svg>'}
+function dtDates(){var t=today();return{t:t,m:addDays(t,1)}}
+function dtWd(d){var p=d.split('-');var x=new Date(+p[0],+p[1]-1,+p[2]);return(x.getMonth()+1)+'月'+x.getDate()+'日 周'+'日一二三四五六'[x.getDay()]}
+function dtTodayRedo(){var t=today(),n=0,g=0,c=0;(S.redo||[]).forEach(function(a){if(!a||!a.at||ymd(new Date(a.at))!==t)return;n+=a.n||0;g+=a.graded||0;c+=a.cor||0});return{n:n,acc:g?Math.round(c/g*100):null}}
+function dtSave(){save('day')}
+function dtPut(date,t){S.day=S.day||{};var m=S.day[date]||(S.day[date]={});t.at=new Date().toISOString();m[t.id]=t}
+function dtNextSlot(date,isToday){var lay=dtLayout(dtList(date),isToday?nowMin():null),s=isToday?Math.ceil(Math.max(nowMin(),360)/15)*15:480;lay.forEach(function(x){if(!x.t.done||isToday)s=Math.max(s,x.e)});return Math.min(s,1425)}
+function renderDay(){var el=$('dtCard');if(!el)return;var D=dtDates(),isT=DT_VIEW==='t',date=isT?D.t:D.m;
+ if(isT&&dtTick(date,nowMin()))dtSave();
+ var c=dtCalc(date,isT),now=nowMin(),lay=c.lay;
+ $('dtHead').innerHTML='<div class="row" style="gap:14px"><h2 style="margin:0">当日任务</h2><span class="seg" id="dt_tabs"><button data-dv="t" class="'+(isT?'on':'')+'">今天 '+D.t.slice(5).replace('-','/')+'</button><button data-dv="m" class="'+(isT?'':'on')+'">明天 '+D.m.slice(5).replace('-','/')+'（提前安排）</button></span></div><span class="mut dt-now">'+dtWd(date)+(isT?' · 现在 '+hm(now):' · 只显示计划')+'</span>';
+ $('dtEnergy').innerHTML='<p class="mut" style="margin:0 0 6px">'+(isT?'当前精力':'起始精力（06:00）')+'</p><div><span class="dt-big">'+Math.round(isT?c.cur:100)+'</span><span class="mut"> / 100</span></div><p class="mut" style="margin:8px 0 0">按计划，'+(isT?'今晚':'明晚')+' 24:00 预计剩 <b style="color:var(--txt)">'+Math.round(c.end)+'</b></p>';
+ $('dtList').innerHTML=lay.length?lay.map(function(x){var t=x.t,note='';
+  if(t.done&&x.dly>0)note='<span class="dly">超时 '+Math.round(x.dly)+' 分完成</span>';else if(!t.done&&t.ext>0)note='<span class="dly">已延长 '+t.ext+' 分'+(x.run?' · 进行中':'')+'</span>';else if(x.sh>0)note='<span class="dly">被顺延 '+Math.round(x.sh)+' 分，原 '+hm(t.os)+'–'+hm(t.oe)+'</span>';else if(x.run)note='<span class="dly ok">进行中</span>';
+  var nm=t.n||(t.lk?'错题组卷 · '+(t.lk.m?modName(t.lk.m.split('::')[0])+(t.lk.m.split('::')[1]?'·'+t.lk.m.split('::')[1]:''):'全部模块')+' '+t.lk.n+' 题':'未命名');
+  return'<div class="dt-tk'+(t.done?' done':'')+(x.run?' nowk':'')+'"><button type="button" class="dt-ck'+(t.done?' on':'')+'" data-dtck="'+t.id+'" aria-label="完成">'+(t.done?'✓':'')+'</button><span class="dt-t">'+hm(x.s)+'–'+hm(x.e)+'</span><span class="dt-n">'+(t.fx?'<span title="固定，不会被顺延">📌</span> ':'')+esc(nm)+note+'</span>'+(t.lk&&!t.done&&isT?'<button type="button" class="btn sm" data-dtgo="'+t.id+'">开始</button>':'')+'<span class="dt-tg '+DT_TAG[t.k][1]+'">'+DT_TAG[t.k][0]+'</span><button type="button" class="dt-ic" data-dted="'+t.id+'" title="编辑">✎</button><button type="button" class="dt-ic" data-dtdel="'+t.id+'" title="删除">×</button></div>'}).join(''):'<div class="empty" style="padding:18px 0">'+(isT?'今天还没有安排任务，用下面的模板或手动添加':'明天还没有安排，可以提前排好')+'</div>';
+ var over=lay.filter(function(x){return!x.t.done&&x.e>1440});
+ $('dtOver').innerHTML=over.map(function(x){return'<div class="dt-warn" style="background:#fff7ec;color:#8a5a14">「'+esc(x.t.n||'任务')+'」被顺延到 24:00 以后（'+hm(x.s)+'–'+hm(x.e)+'）<span class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm" data-dtmv="'+x.t.id+'">移到明天</button><button type="button" class="btn sec sm" data-dtdel2="'+x.t.id+'">删掉</button></span></div>'}).join('');
+ $('dtWarn').innerHTML=c.low!=null?'<div class="dt-warn">按计划 '+hm(c.low)+' 精力会降到 20 以下，建议少排一项或加个休息。</div>':'';
+ var studied=0,dl=0,dn=0;lay.forEach(function(x){if(x.t.done)dn++;dl+=x.dly;if(x.t.k==='rs')return;if(x.t.done)studied+=x.e-x.s;else if(isT&&x.s<now)studied+=Math.min(now,x.e)-x.s});
+ var rd=dtTodayRedo(),plH=lay.reduce(function(a,x){return a+(x.t.k==='rs'?0:x.e-x.s)},0);
+ $('dtChart').innerHTML=dtChart(c,isT);
+ $('dtSum').innerHTML=isT?'<div><span>今日完成</span><b>'+dn+' / '+lay.length+' 项</b></div><div><span>已学习</span><b>'+(Math.round(studied/6)/10)+' 小时</b></div><div><span>累计延迟</span><b'+(dl?' style="color:#a8661c"':'')+'>'+Math.round(dl)+' 分</b></div><div><span>今日做题</span><b>'+rd.n+' 题'+(rd.acc!=null?' · '+rd.acc+'%':'')+'</b></div>':'<div><span>计划任务</span><b>'+lay.length+' 项</b></div><div><span>计划学习</span><b>'+(Math.round(plH/6)/10)+' 小时</b></div><div><span>24:00 预计精力</span><b>'+Math.round(c.end)+'</b></div>';
+ var cf=S.settings.en||DEF_EN;$('dtRule').textContent='规则：空闲 '+cf.idle+' · 轻松 '+cf.lt+' · 高强度 '+cf.hi+' · 休息 +'+cf.rs+'（每小时）；同一任务第 3 小时起每小时再 −'+cf.long+'；低于 '+cf.lowAt+' 消耗 ×'+cf.lowX+'（可在设置里改）';
+ if(!DT_EDIT&&!$('dtAdd').dataset.touched){var s0=dtNextSlot(date,isT);$('dt_s').value=pad(Math.floor(s0/60)%24)+':'+pad(s0%60);var e0=Math.min(1440,s0+60);$('dt_e').value=pad(Math.floor(e0/60)%24)+':'+pad(e0%60)}
+ var lm=$('dt_lm');if(lm&&!lm.options.length)lm.innerHTML='<option value="">全部模块</option>'+EBM.map(function(m){return'<option value="'+m.k+'">'+m.n+'</option>'}).join('');
+ bindDayDyn(date,isT)}
+function dtFind(date,id){var m=(S.day||{})[date]||{};return m[id]}
+function dtCheck(date,id,isT){var t=dtFind(date,id);if(!t)return;var now=Math.round(nowMin());
+ if(t.done){t.done=false;t.ds=null;t.de=null;t.ps=null;t.ext=0}
+ else{var x=dtLayout(dtList(date),isT?now:null).filter(function(y){return y.t===t})[0];if(!isT){t.done=true;t.ds=x?x.s:t.os;t.de=x?x.e:t.oe}else if(x&&x.s<=now){t.done=true;t.ds=x.s;t.de=Math.max(x.s+1,now)}else{t.done=true;t.de=now;t.ds=Math.max(360,now-(t.oe-t.os))}}
+ dtPut(date,t);dtSave();renderDay()}
+function dtDel(date,id){var t=dtFind(date,id);if(!t)return;t.del=true;dtPut(date,t);dtSave();if(DT_EDIT&&DT_EDIT.id===id)dtCancelEdit();renderDay()}
+function dtMove(date,id){var t=dtFind(date,id);if(!t)return;var nd=addDays(date,1);var c=normTask(Object.assign({},t,{id:uid(),ext:0,ps:null,done:false,ds:null,de:null}));dtPut(nd,c);t.del=true;dtPut(date,t);dtSave();toast('已移到 '+nd.slice(5).replace('-','/'));renderDay()}
+function dtGo(date,id){var t=dtFind(date,id);if(!t||!t.lk)return;var md=t.lk.m;var pool=poolRows('all').filter(function(r){if(md){var p=md.split('::');if(r.mod!==p[0])return false;if(p[1]&&r.grp!==p[1])return false}return!mastered(r.key)});
+ if(!pool.length){toast('没有符合条件的错题（先导入错题本）');return}pool=srsOrder(pool).slice(0,t.lk.n);var st=Math.round(nowMin());
+ var lb='组卷：'+(md?modName(md.split('::')[0])+(md.split('::')[1]?'·'+md.split('::')[1]:''):'全部模块')+' · '+pool.length+' 题';
+ if(t.ps==null){t.ps=st;dtPut(date,t);dtSave()}
+ startSession(pool,lb);if(SES&&!SES.done)DT_LINK={d:date,id:id,sid:SES.id,st:st}}
+function dtOnSubmit(att){if(!DT_LINK||!att||att.id!==DT_LINK.sid)return;var L=DT_LINK,t=dtFind(L.d,L.id);DT_LINK=null;if(!t||t.done)return;var now=Math.round(nowMin());t.done=true;t.ds=t.ps!=null?Math.min(t.ps,now):now;t.de=Math.max(t.ds+1,now);dtPut(L.d,t);dtSave();toast('已自动完成当日任务');renderDay()}
+function dtCancelEdit(){DT_EDIT=null;$('dt_addBtn').textContent='添加';$('dt_cancel').style.display='none';$('dt_n').value='';delete $('dtAdd').dataset.touched}
+function dtLkShow(){$('dt_lkBox').style.display=$('dt_k').value==='lk'?'inline-flex':'none'}
+function dtAddTask(o){var D=dtDates(),date=DT_VIEW==='t'?D.t:D.m;var t=normTask(Object.assign({id:uid(),ext:0,done:false},o));dtPut(date,t);dtSave();renderDay()}
+function dtTpl(n,k,min){var D=dtDates(),isT=DT_VIEW==='t',date=isT?D.t:D.m,s=dtNextSlot(date,isT);if(s+min>1440){toast('今天剩下的时间不够了，可以加到明天');return}dtAddTask({n:n,k:k,os:s,oe:s+min})}
+function bindDay(){var A=$('dtAdd');if(!A)return;['dt_s','dt_e'].forEach(function(id){$(id).addEventListener('input',function(){A.dataset.touched='1'})});
+ $('dt_k').onchange=dtLkShow;$('dt_cancel').onclick=function(){dtCancelEdit();renderDay()};
+ $('dt_tpl1').onclick=function(){dtTpl('套卷','hi',120)};$('dt_tpl2').onclick=function(){dtTpl('复盘','lt',60)};
+ $('dt_addBtn').onclick=function(){var s=pm($('dt_s').value),e=pm($('dt_e').value);if(s==null||e==null){toast('请填写开始和结束时间');return}if(e===0)e=1440;if(e<=s){toast('结束时间要晚于开始时间');return}
+  var kv=$('dt_k').value,lk=kv==='lk'?{m:$('dt_lm').value,n:Math.max(1,Math.min(200,num($('dt_ln').value)||20))}:null,o={n:$('dt_n').value.trim(),k:kv==='lk'?'hi':kv,os:s,oe:e,fx:$('dt_fx').checked,lk:lk};
+  if(DT_EDIT){var t=dtFind(DT_EDIT.d,DT_EDIT.id);if(t){var keepPs=t.ps!=null&&t.os===s;Object.assign(t,o);if(!keepPs)t.ps=null;dtPut(DT_EDIT.d,t);dtSave()}dtCancelEdit();renderDay();toast('已保存');return}
+  dtAddTask(o);$('dt_n').value='';delete A.dataset.touched;renderDay()};
+ if(DT_TIMER)clearInterval(DT_TIMER);DT_TIMER=setInterval(function(){var D=dtDates();var ch=dtTick(D.t,nowMin());if(ch)dtSave();if($('t-home')&&$('t-home').classList.contains('on')&&!(S.ui.fold||{}).day)renderDay()},60000)}
+function bindDayDyn(date,isT){var el=$('dtCard');
+ [].forEach.call(el.querySelectorAll('[data-dv]'),function(b){b.onclick=function(){DT_VIEW=b.dataset.dv;if(DT_EDIT)dtCancelEdit();delete $('dtAdd').dataset.touched;renderDay()}});
+ [].forEach.call(el.querySelectorAll('[data-dtck]'),function(b){b.onclick=function(){dtCheck(date,b.dataset.dtck,isT)}});
+ [].forEach.call(el.querySelectorAll('[data-dtdel]'),function(b){b.onclick=function(){var t=dtFind(date,b.dataset.dtdel);if(t&&confirm('删除「'+(t.n||'任务')+'」？'))dtDel(date,t.id)}});
+ [].forEach.call(el.querySelectorAll('[data-dtdel2]'),function(b){b.onclick=function(){dtDel(date,b.dataset.dtdel2)}});
+ [].forEach.call(el.querySelectorAll('[data-dtmv]'),function(b){b.onclick=function(){dtMove(date,b.dataset.dtmv)}});
+ [].forEach.call(el.querySelectorAll('[data-dtgo]'),function(b){b.onclick=function(){dtGo(date,b.dataset.dtgo)}});
+ [].forEach.call(el.querySelectorAll('[data-dted]'),function(b){b.onclick=function(){var t=dtFind(date,b.dataset.dted);if(!t)return;DT_EDIT={d:date,id:t.id};$('dt_s').value=pad(Math.floor(t.os/60)%24)+':'+pad(t.os%60);$('dt_e').value=pad(Math.floor(t.oe/60)%24)+':'+pad(t.oe%60);$('dt_n').value=t.n;$('dt_k').value=t.lk?'lk':t.k;$('dt_fx').checked=t.fx;if(t.lk){$('dt_lm').value=t.lk.m;$('dt_ln').value=t.lk.n}dtLkShow();$('dt_addBtn').textContent='保存';$('dt_cancel').style.display='';$('dtAdd').dataset.touched='1';$('dt_n').focus()}})}
+// ---------- 总览卡片折叠 ----------
+function applyFold(){var f=(S.ui&&S.ui.fold)||{};[].forEach.call(document.querySelectorAll('#t-home .fcard'),function(c){var k=c.dataset.fk,on=!!f[k];c.classList.toggle('folded',on);var b=c.querySelector(':scope>.foldb');if(!b){b=document.createElement('button');b.type='button';b.className='foldb';c.appendChild(b);b.onclick=function(){S.ui=normUi(S.ui);S.ui.fold[k]=!S.ui.fold[k];S.ui.at=new Date().toISOString();save('ui');applyFold();if(k==='day'&&!S.ui.fold[k])renderDay()}}b.textContent=on?'▸ 展开':'▾ 收起';b.setAttribute('aria-expanded',on?'false':'true')})}
+function renderEnCfg(){var c=S.settings.en||DEF_EN;Object.keys(DEF_EN).forEach(function(k){var i=$('en_'+k);if(i&&document.activeElement!==i)i.value=c[k]})}
+function bindEnCfg(){if(!$('en_save'))return;$('en_save').onclick=function(){var o={};Object.keys(DEF_EN).forEach(function(k){o[k]=num($('en_'+k).value)});S.settings.en=normEn(o);save('settings');renderEnCfg();renderDay();toast('精力规则已保存')};$('en_reset').onclick=function(){S.settings.en=normEn({});save('settings');renderEnCfg();renderDay();toast('已恢复默认精力规则')}}
+var _rDue=renderDue,_rFoc=renderFocus;renderDue=function(){_rDue();applyFold()};renderFocus=function(){_rFoc();applyFold()};
+window.XG={go:go,_dt:{layout:dtLayout,tick:dtTick,energy:dtEnergy,calc:dtCalc,merge:mergeDay,norm:normDay,list:dtList,check:dtCheck,go:dtGo,render:renderDay,view:function(v){DT_VIEW=v;renderDay()},link:function(){return DT_LINK}},exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_questionOf:questionOf,_qeditKey:qeditKey,_qeditOpen:qeditIsOpen,_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
@@ -1315,7 +1483,7 @@ document.addEventListener('DOMContentLoaded',function(){init();
  $('e_files').onchange=function(){importFiles($('e_files').files).then(function(){$('e_files').value=''})};
  $('e_dir').onchange=function(){importFiles($('e_dir').files).then(function(){$('e_dir').value=''})};
  [].forEach.call(document.querySelectorAll('#e_filter button'),function(b){b.onclick=function(){curFilter=b.dataset.f;renderErrs()}});
- bindSettings();bindRedo();bindSync();renderAll();qbLoad().then(function(){renderAll();return loadBuiltinTiku()}).then(function(){return bootSync()}).then(function(){renderAll()});if(typeof XLSX==='undefined')console.error('XLSX missing');
+ bindSettings();bindRedo();bindSync();bindDay();bindEnCfg();renderAll();qbLoad().then(function(){renderAll();return loadBuiltinTiku()}).then(function(){return bootSync()}).then(function(){renderAll()});if(typeof XLSX==='undefined')console.error('XLSX missing');
 });
 })();
 </script>
