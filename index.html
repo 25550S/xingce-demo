@@ -35,6 +35,8 @@ input[type=number]{width:76px}
 input:disabled{background:#f4f4f1;color:var(--mut)}
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 button.btn{background:var(--acc);color:#fff;border:1px solid var(--acc);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit}
+a.btn{display:inline-block;background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:inherit;text-decoration:none;line-height:1.4}
+a.btn:hover{border-color:var(--acc);color:var(--acc)}
 button.btn.sec{background:#fff;color:var(--txt);border-color:var(--line)}
 button.btn.sec:hover{border-color:var(--acc);color:var(--acc)}
 button.btn.red{background:#fff;color:var(--bad);border-color:#ecd0cd}
@@ -105,6 +107,8 @@ details.kdd summary{list-style:none;cursor:pointer}details.kdd summary::-webkit-
 #copyBox{position:fixed;inset:0;background:rgba(20,20,30,.35);z-index:40;align-items:center;justify-content:center}
 #copyBox .card{width:min(720px,92vw)}#copyBox textarea{width:100%;height:340px;font-size:12.5px}
 
+#syncBar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+#s_syncTok{width:100%;max-width:480px}
 .okc{color:#3f7d58}
 .mm{min-width:30px;text-align:right;font-size:12px}
 .mkt.mst.on{background:#e8f3ec;border-color:#9cc8ab;color:#3f7d58}
@@ -264,15 +268,14 @@ button,a,.opt,nav button{touch-action:manipulation}
       <label class="mut" style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="s_range">题号不在该模块「题号范围」内的套卷错题按专项处理（用于区分同名的其他系列套题）</label>
       <div class="row" style="margin-top:16px"><button class="btn" id="s_save">保存设置</button><button class="btn sec" id="s_reset">恢复默认规则</button></div>
     </div>
-    <div class="card"><h2>加密同步（电脑 ⇄ 手机）</h2>
-      <p>两台设备输入同一组口令：这边导出「加密同步文件」，把文件放到 OneDrive「行测成长记」文件夹或传到手机，那边用同一口令导入。文件里是密文，公开网页和 GitHub 仓库都不会出现你的错题本。若文件比本机新，会覆盖本机（后写入的为准）；若本机比较新，会提示而不会悄悄覆盖。</p>
-      <p class="mut">请设一句只有你记得、也不用在别的网站上的口令。口令不会写进文件明文，也不会进普通备份。忘记口令后，加密文件无法打开，本机数据和普通备份还在。</p>
-      <div class="form" style="max-width:420px">
-        <label>同步口令<input id="s_syncPw" type="password" autocomplete="new-password" minlength="8" placeholder="至少 8 个字符"></label>
-        <label>再输入一遍（第一次导出时）<input id="s_syncPw2" type="password" autocomplete="new-password" placeholder="确认口令"></label>
+    <div class="card" id="syncCard"><h2>云端自动同步（电脑 ⇄ 手机）</h2>
+      <p>用你自己的 GitHub 私有空间（Private Gist）在电脑和手机之间自动同步进度。公开网页和仓库里不会出现你的错题本。任意一边刷题、改数据后，另一边打开页面就会自动对齐。</p>
+      <p><a class="btn sec" id="s_syncTokLink" href="https://github.com/settings/tokens/new?scopes=gist&description=xingce-sync" target="_blank" rel="noopener">打开 GitHub 生成同步钥匙</a></p>
+      <p class="mut">页面会自动勾选 gist 权限，Expiration 建议选 No expiration，点底部 Generate token 后复制粘贴到下面。</p>
+      <div class="form" style="max-width:480px">
+        <label>同步钥匙（GitHub Token）<input id="s_syncTok" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 ghp_ 或 github_pat_ 开头的钥匙"></label>
       </div>
-      <label class="mut" style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="s_syncRem">记住本机口令（只存在这台设备的这个浏览器里，换电脑或清数据后需再输入）</label>
-      <div class="row" style="margin-top:12px"><button class="btn" id="s_syncGo">导出加密同步文件</button><button class="btn sec" id="s_syncNow">再次导出</button><input type="file" id="s_syncFile" accept=".json" style="display:none"><button class="btn sec" id="s_syncImport">导入加密同步文件</button><button class="btn sec" id="s_syncOff">本机忘掉口令</button></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="s_syncGo">连接并开启自动同步</button><button class="btn sec" id="s_syncNow">立即同步</button><button class="btn sec" id="s_syncOff">断开同步</button></div>
       <p id="s_syncSt" class="mut" style="margin-top:10px"></p>
     </div>
     <div class="card"><h2>备份与恢复</h2>
@@ -322,11 +325,12 @@ button,a,.opt,nav button{touch-action:manipulation}
 <li>「复制摘要」会把一段简短的文字摘要复制下来，可以直接粘贴到聊天里。</li></ul>
 <h3>8. 分数怎么算</h3><ul id="formulaHelp"></ul>
 <h3>9. 备份</h3><ul><li>超过 7 天没备份，总览顶部会出现提醒。点「立即导出备份」会下载「行测成长记备份_日期.json」，把这个文件从「下载」文件夹拖进 OneDrive 的「行测成长记」文件夹即可。</li><li>换电脑或换手机时，在「设置」点「导入备份」选这个文件即可恢复。备份不含题库题目：用网页打开会自动再加载 1 期 12 套；用文件打开时请再导入一次「1/题库」文件夹。</li></ul>
-<h3>10. 加密同步（电脑和手机共用数据）</h3><ul>
-<li>在「设置 → 加密同步」设一口令，点「导出加密同步文件」。把下载的文件放到 OneDrive「行测成长记」文件夹，或发到手机，在另一台设备用<b>同一口令</b>点「导入加密同步文件」。</li>
-<li>文件在导出前就会加密（PBKDF2 + AES-GCM）。公开仓库和网页里没有你的错题本。口令不会写进普通备份，也不会写进程序。</li>
-<li>文件比本机新时会覆盖本机（后写入的为准）；本机比较新时会提示，不会悄悄覆盖。</li>
-<li>静态网页无法在不暴露数据的前提下自动写入私人云端（GitHub 私人仓库需要令牌，也不能把令牌写进公开页面），所以采用加密文件同步。请同时保留普通备份。</li></ul>
+<h3>10. 云端自动同步（电脑 ⇄ 手机）</h3><ul>
+<li>在「设置 → 云端自动同步」点「打开 GitHub 生成同步钥匙」。页面会自动勾选 gist 权限，Expiration 建议选 No expiration，点底部 Generate token，复制生成的钥匙。</li>
+<li>把钥匙粘贴到「同步钥匙」框，点「连接并开启自动同步」。电脑和手机都要做一次（用同一把钥匙）。连上以后，一边刷题或改数据，另一边打开页面（或点「立即同步」）就会自动对齐。</li>
+<li>数据保存在你自己 GitHub 账号下的私有空间（Private Gist）里，公开网页和仓库不会出现你的错题本。同步钥匙只存在这台设备的这个浏览器里，不会写进普通备份，也不会写进「发给助手」的文件。</li>
+<li>「断开同步」只是忘掉这台设备上保存的钥匙，不会删除本机数据，也不会删除云端备份。重新粘贴同一把钥匙即可继续同步。</li>
+<li>请同时保留「导出备份」。同步需要联网；用文件打开（file://）也可以，只要设备能访问 GitHub。</li></ul>
 </div></section>
 </main>
 <div class="toast" id="toast"></div>
@@ -359,7 +363,7 @@ function clone(o){return JSON.parse(JSON.stringify(o))}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function load(k,d){try{var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}catch(e){return d}}
 var QUIET=false;
-function save(k){localStorage.setItem(P+k,JSON.stringify(S[k]));if(!QUIET&&k!=='meta'&&typeof bumpSync==='function')bumpSync()}
+function save(k,fast){localStorage.setItem(P+k,JSON.stringify(S[k]));if(!QUIET&&k!=='meta'&&typeof bumpSync==='function')bumpSync(!!fast)}
 function saveAll(){['settings','papers','errbooks','meta','ans','redo','marks','mast'].forEach(save)}
 function normMarks(m){m=m&&typeof m==='object'?m:{};return{tags:Array.isArray(m.tags)&&m.tags.length?m.tags:['易混','再看'],m:m.m&&typeof m.m==='object'?m.m:{}}}
 function normSettings(o){o=o&&typeof o==='object'?o:{};var s=Object.assign({},DEF_RULE);['recentN','threshold','perError','maxDeduct','zx','alias','rangeCheck','exclM'].forEach(function(k){if(o[k]!=null&&o[k]!=='')s[k]=o[k]});
@@ -505,11 +509,11 @@ function savePaper(){var o=formPaperObj();o.date=$('p_date').value;o.note=$('p_n
  if(S.papers.some(function(p){return p.name===o.name&&p.id!==editing})){toast('已有同名套卷「'+o.name+'」');return}
  var bad=MODS.filter(function(m){var v=o.mods[m.k];return v.man!=null&&(v.man<0||v.man>v.t)})[0];if(bad){toast(bad.n+' 的对题数不能超过题数');return}
  if(editing){var p=S.papers.filter(function(x){return x.id===editing})[0];Object.assign(p,o);toast('已保存')}else{o.id=uid();S.papers.push(o);toast('已登记「'+o.name+'」')}
- detailId=editing||o.id;editing=null;save('papers');renderPaperForm(null);renderAll()}
+ detailId=editing||o.id;editing=null;save('papers',true);renderPaperForm(null);renderAll()}
 function unregistered(){var names={};S.papers.forEach(function(p){names[p.name]=1});var m={};allPaperRows().forEach(function(r){if(!r.src||names[r.src])return;if(!m[r.src])m[r.src]={n:0,d:null};m[r.src].n++;if(r.d&&(!m[r.src].d||r.d<m[r.src].d))m[r.src].d=r.d});
  return Object.keys(m).sort(nat).map(function(k){return{name:k,n:m[k].n,d:m[k].d}})}
 function quickRegister(name){var u=unregistered().filter(function(x){return x.name===name})[0];var L=S.settings.layout;var o={id:uid(),name:name,date:(u&&u.d)||today(),note:'',file:'',mods:{}};
- MODS.forEach(function(m){o.mods[m.k]={t:L[m.k].t,s:L[m.k].s,man:null}});S.papers.push(o);save('papers');detailId=o.id;editing=o.id;renderAll();renderPaperForm(o);
+ MODS.forEach(function(m){o.mods[m.k]={t:L[m.k].t,s:L[m.k].s,man:null}});S.papers.push(o);save('papers',true);detailId=o.id;editing=o.id;renderAll();renderPaperForm(o);
  var miss=paperScore(o).missing;toast('已登记「'+name+'」'+(miss.length?'，请补填 '+miss.join('、')+' 的对题数':''));$('paperFormCard').scrollIntoView({behavior:'smooth'})}
 function renderPapers(){var u=unregistered();
  $('unregList').innerHTML=u.length?'<p class="mut">这些名称出现在错题本「来源」中（已排除专项），点按钮即用默认题量登记，之后补填没有错题本的模块。</p><div class="chips">'+u.map(function(x){return'<span class="chip">'+esc(x.name)+' <span class="mut">'+x.n+' 道错题</span><button class="btn sm" data-reg="'+esc(x.name)+'">登记这套卷</button></span>'}).join('')+'</div>':'<div class="empty">'+(allPaperRows().length?'错题本里的套卷都已登记':'导入错题本后，这里会列出还没登记的套卷')+'</div>';
@@ -522,7 +526,7 @@ function renderPapers(){var u=unregistered();
    '<td><b>'+(sc.complete?sc.total:'<span class="hint">待补全</span>')+'</b></td><td style="white-space:nowrap"><button class="btn sec sm" data-det="'+p.id+'">详情</button> <button class="btn sec sm" data-edit="'+p.id+'">编辑</button> <button class="btn red sm" data-delp="'+p.id+'">删除</button></td></tr>'}).join('')+'</tbody></table>':'<div class="empty">还没有登记套卷</div>';
  [].forEach.call(document.querySelectorAll('[data-det]'),function(b){b.onclick=function(){detailId=b.dataset.det;renderPapers();$('detailCard').scrollIntoView({behavior:'smooth'})}});
  [].forEach.call(document.querySelectorAll('[data-edit]'),function(b){b.onclick=function(){editing=b.dataset.edit;renderPaperForm(S.papers.filter(function(x){return x.id===editing})[0]);$('paperFormCard').scrollIntoView({behavior:'smooth'})}});
- [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){b.onclick=function(){if(!confirm('删除这套卷的登记？（不影响错题本）'))return;S.papers=S.papers.filter(function(x){return x.id!==b.dataset.delp});if(detailId===b.dataset.delp)detailId=null;save('papers');renderAll()}});
+ [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){b.onclick=function(){if(!confirm('删除这套卷的登记？（不影响错题本）'))return;S.papers=S.papers.filter(function(x){return x.id!==b.dataset.delp});if(detailId===b.dataset.delp)detailId=null;save('papers',true);renderAll()}});
  renderDetail()}
 function renderDetail(){var p=S.papers.filter(function(x){return x.id===detailId})[0];var c=$('detailCard');if(!p){c.style.display='none';return}c.style.display='';
  var rows=allPaperRows().filter(function(r){return r.src===p.name}).sort(function(a,b){return(a.q||999)-(b.q||999)});var sc=paperScore(p);
@@ -559,14 +563,14 @@ function parseWorkbook(wb,fileName){var sh=null,hi=-1,aoa=null;var names=wb.Shee
  var causeCol=cols.filter(function(h){return/错因/.test(h)})[0]||'';var typeCol=cols.filter(function(h){return/文段类型/.test(h)})[0]||'';
  var find=function(re){return cols.filter(function(h){return re.test(h)&&h!==causeCol})[0]};var kd,jg=find(/行文结构/);
  if(typeCol&&jg)kd=[typeCol,jg];else if(find(/具体题型/))kd=[find(/具体题型/)];else if(find(/具体考点|考点/))kd=[find(/具体考点/)||find(/考点/)];else if(find(/小题型|知识点|具体规律/))kd=[find(/小题型|知识点|具体规律/)];else if(find(/题型/))kd=[find(/题型/)];else if(jg)kd=[jg];else{var o=cols.filter(function(h){return h!==causeCol})[0];kd=o?[o]:[]}
- return{file:fileName,sheet:sh,cols:cols,rows:rows,kd:kd,causeCol:causeCol,typeCol:typeCol,hasSrc:srcJ>=0,hasNote:noteJ>=0,hasQt:qtJ>=0,importedAt:new Date().toLocaleString('zh-CN'),filled:filled,nsrc:nsrc}}
+ return{file:fileName,sheet:sh,cols:cols,rows:rows,kd:kd,causeCol:causeCol,typeCol:typeCol,hasSrc:srcJ>=0,hasNote:noteJ>=0,hasQt:qtJ>=0,importedAt:new Date().toLocaleString('zh-CN'),importedMs:Date.now(),filled:filled,nsrc:nsrc}}
 function kdOptions(f){var c=f.cols.filter(function(h){return h!==f.causeCol});var o=c.map(function(h){return[h]});for(var i=0;i<c.length;i++)for(var j=i+1;j<c.length;j++)o.push([c[i],c[j]]);return o}
 var curErrMod='yy',curFilter='paper';
 function importFiles(fileList){var files=[].slice.call(fileList).filter(function(f){return/\.(xlsx|xlsm|xls)$/i.test(f.name)&&!/^~\$/.test(f.name)});
  if(!files.length){toast('没有找到 Excel 文件');return Promise.resolve()}var msgs=[];$('e_msg').textContent='正在读取 '+files.length+' 个文件…';
  return Promise.all(files.map(function(f){return f.arrayBuffer().then(function(buf){try{var res=parseWorkbook(XLSX.read(new Uint8Array(buf),{type:'array'}),f.name);
    if(res.error){msgs.push('✕ '+f.name+'：'+res.error);return}var old=S.errbooks[curErrMod][f.name];if(old&&old.kd&&old.kd.every(function(h){return res.cols.indexOf(h)>=0}))res.kd=old.kd;if(old&&old.grp)res.grp=old.grp;
-   S.errbooks[curErrMod][f.name]=res;msgs.push('✓ '+f.name+'：'+res.rows.length+' 道错题'+(old?'（已覆盖旧数据）':'')+(res.hasSrc?'':'；没有「来源」列，无法关联套卷'))}catch(e){msgs.push('✕ '+f.name+'：读取失败 '+e.message)}})})).then(function(){save('errbooks');$('e_msg').innerHTML=msgs.map(esc).join('<br>');if(!editing)renderPaperForm(null);renderAll()})}
+   S.errbooks[curErrMod][f.name]=res;msgs.push('✓ '+f.name+'：'+res.rows.length+' 道错题'+(old?'（已覆盖旧数据）':'')+(res.hasSrc?'':'；没有「来源」列，无法关联套卷'))}catch(e){msgs.push('✕ '+f.name+'：读取失败 '+e.message)}})})).then(function(){save('errbooks',true);$('e_msg').innerHTML=msgs.map(esc).join('<br>');if(!editing)renderPaperForm(null);renderAll()})}
 function grpSel(fn){var cur=grpOf(curErrMod,fn);var f=S.errbooks[curErrMod][fn];var opts=curErrMod==='yy'?['中心理解','非中心理解','其他']:[];if(opts.indexOf(cur)<0)opts.unshift(cur);
  return'<select class="grpSel" data-fn="'+esc(fn)+'"><option value="__auto">自动（'+esc(autoGrp(curErrMod,fn))+'）</option>'+opts.map(function(o){return'<option value="'+esc(o)+'"'+(f.grp===o?' selected':'')+'>'+esc(o)+'</option>'}).join('')+'<option value="__custom">自定义…</option></select>'}
 var curGrp='__all';
@@ -620,8 +624,8 @@ function bindSettings(){$('s_save').onclick=function(){var s=S.settings;[['recen
  $('s_export').onclick=function(){doExport()};
  $('s_import').onclick=function(){$('s_importFile').click()};
  $('s_importFile').onchange=function(){var f=$('s_importFile').files[0];if(!f)return;f.text().then(function(t){var d=JSON.parse(t);if(d.app!=='行测成长记')throw new Error('不是行测成长记的备份文件');if(!confirm('导入会覆盖当前所有数据，确定吗？'))return;
-  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);saveAll();if(typeof bumpSync==='function')bumpSync();renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
- $('s_clear').onclick=function(){if(!confirm('确定清空全部数据？建议先导出备份。'))return;if(prompt('请输入「清空」两个字确认')!=='清空')return;Object.keys(localStorage).forEach(function(k){if(k.indexOf(P)===0)localStorage.removeItem(k)});SYNC_PW=null;SYNC_ST={msg:'',ok:null,at:''};qbClear();init();detailId=null;editing=null;renderPaperForm(null);renderAll();toast('已清空')}}
+  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);saveAll();if(typeof bumpSync==='function')bumpSync(true);renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
+ $('s_clear').onclick=function(){if(!confirm('确定清空全部数据？建议先导出备份。'))return;if(prompt('请输入「清空」两个字确认')!=='清空')return;var tok=null,gid=null;try{tok=localStorage.getItem(P+'gh_token');gid=localStorage.getItem(P+'gh_gist_id')}catch(e){}Object.keys(localStorage).forEach(function(k){if(k.indexOf(P)===0)localStorage.removeItem(k)});try{if(tok)localStorage.setItem(P+'gh_token',tok);if(gid)localStorage.setItem(P+'gh_gist_id',gid)}catch(e){}SYNC_ST={msg:'',ok:null,at:''};qbClear();init();detailId=null;editing=null;renderPaperForm(null);renderAll();toast(tok?'已清空本机数据。云端备份还在，点「立即同步」可以拉回来。':'已清空')}}
 
 // ---------- 题库（IndexedDB）与答案 ----------
 var QB={};var IDB_OK=true;
@@ -719,7 +723,7 @@ function submit(){var un=SES.items.length-Object.keys(SES.ch).length;if(un&&!con
  var items=SES.items.map(function(it,i){return{key:it.key,paper:it.paper,q:it.q,aq:it.aq,mod:it.mod,grp:it.grp,kd:it.kd,cause:it.cause,note:it.note,qt:it.qt,np:!!it.np,ans:it.ans,ch:SES.ch[i]||'',t:SES.t[i]||0,rev:!!SES.rev[i]}});
  var graded=items.filter(function(x){return x.ans}),cor=graded.filter(function(x){return x.ch===x.ans}).length;
  var att={id:SES.id,at:new Date().toISOString(),label:SES.label,n:items.length,graded:graded.length,cor:cor,time:items.reduce(function(a,x){return a+x.t},0),items:items};
- S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo');SES.att=att;renderResult()}
+ S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo',true);SES.att=att;renderResult()}
 function showAttempt(id){var a=S.redo.filter(function(x){return x.id===id})[0];if(!a)return;SES={done:true,att:a,label:a.label,items:a.items};$('practice').style.display='block';document.body.style.overflow='hidden';renderResult()}
 function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x.ch}).length;var acc=a.graded?Math.round(a.cor/a.graded*1000)/10:null;
  var h='<div class="prbar"><div><b>'+esc(a.label)+'</b><span class="mut"> · '+new Date(a.at).toLocaleString('zh-CN')+'</span></div><div></div><div class="row"><button class="btn sec" id="rs_wrong">重做本次错题</button><button class="btn" id="rs_close">完成</button></div></div>';
@@ -898,63 +902,126 @@ function loadBuiltinTiku(){if(!isHttp())return Promise.resolve({ok:false,reason:
  var el=$('q_msg');if(el&&!el.textContent)el.textContent='正在加载内置题库…';
  return fetchFirst(tikuCandidates('tiku/qb.json')).then(function(data){var u=unpackQb(data);applyBuiltinAns(u.ans);var jobs=[],n=0;u.papers.forEach(function(pp){if(QB[pp.name]&&!QB[pp.name].builtin)return;if(QB[pp.name]&&QB[pp.name].builtin&&QB[pp.name].count>=pp.count)return;n++;jobs.push(qbPut(pp.name,pp))});
   return Promise.all(jobs).then(function(){if(el)el.innerHTML='✓ 已自动加载内置题库：1 期 '+Object.keys(QB).length+' 套。以后的套卷仍可用下方按钮导入。';return{ok:true,n:n}})}).catch(function(e){if(el)el.textContent='内置题库暂时没加载成功，请用下方按钮导入题库 txt。';return{ok:false,err:String(e&&e.message||e)}})}
-// ---------- 云端同步（口令派生密钥，密文再上传；口令不写入数据、日志或仓库） ----------
-var SYNC_PW=null,SYNC_TIMER=null,SYNC_ST={msg:'',ok:null,at:''},SLOT_CACHE=null;
-var SYNC_KDF_ITER=120000,SYNC_PREFIX='xcz';
-var PW_LS=P+'syncpw'; // 仅在用户勾选「记住本机」时写入本机浏览器，不进备份、不进云端
-function bumpSync(){if(QUIET)return;S.meta=S.meta||{};S.meta.localAt=new Date().toISOString();try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}scheduleSync()}
-function rememberedPw(){try{return localStorage.getItem(PW_LS)||''}catch(e){return ''}}
-function forgetPw(keepMem){try{localStorage.removeItem(PW_LS)}catch(e){}if(!keepMem){SYNC_PW=null;SLOT_CACHE=null}}
-function holdPw(pw,remember){SYNC_PW=pw;if(remember){try{localStorage.setItem(PW_LS,pw)}catch(e){}}else{try{localStorage.removeItem(PW_LS)}catch(e){}}}
-function hexArr(u){return Array.from(u).map(function(b){return('0'+b.toString(16)).slice(-2)}).join('')}
-function b64url(u){var s='',i;for(i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-function unb64url(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var bin=atob(s),u=new Uint8Array(bin.length),i;for(i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
-function pbkdf2(pw,salt,iter,bytes){return crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']).then(function(k){return crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode(salt),iterations:iter},k,bytes*8)}).then(function(b){return new Uint8Array(b)})}
-function deriveSlot(pw){if(SLOT_CACHE&&SLOT_CACHE.pw===pw)return Promise.resolve(SLOT_CACHE.slot);return Promise.all([pbkdf2(pw,'xingce-chengzhangji-locator-v1',SYNC_KDF_ITER,16),pbkdf2(pw,'xingce-chengzhangji-edit-v1',SYNC_KDF_ITER,12)]).then(function(a){var slot={id:SYNC_PREFIX+hexArr(a[0]).slice(0,20),edit:hexArr(a[1])};SLOT_CACHE={pw:pw,slot:slot};return slot})}
-function gzipBuf(str){if(typeof CompressionStream==='undefined')return Promise.resolve(new TextEncoder().encode(str));return new Response(new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer().then(function(b){return new Uint8Array(b)})}
-function gunzipBuf(u){if(typeof DecompressionStream==='undefined')return Promise.resolve(new TextDecoder().decode(u));return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer().then(function(b){return new TextDecoder().decode(b)})}
-function encPayload(pw,obj){var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
- return gzipBuf(JSON.stringify(obj)).then(function(plain){
-  return pbkdf2(pw,'xingce-chengzhangji-enc-v1:'+hexArr(salt),SYNC_KDF_ITER,32).then(function(raw){
-   return crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt']).then(function(key){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,plain)}).then(function(ct){return{v:1,alg:'AES-GCM',kdf:'PBKDF2',hash:'SHA-256',iter:SYNC_KDF_ITER,gz:1,salt:b64url(salt),iv:b64url(iv),ct:b64url(new Uint8Array(ct)),at:obj.updatedAt}})})})}
-function decPayload(pw,wrap){if(!wrap||wrap.v!==1||!wrap.ct||!wrap.salt||!wrap.iv)return Promise.reject(new Error('云端数据格式不对'));
- return pbkdf2(pw,'xingce-chengzhangji-enc-v1:'+hexArr(unb64url(wrap.salt)),wrap.iter||SYNC_KDF_ITER,32).then(function(raw){return crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']).then(function(key){return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64url(wrap.iv)},key,unb64url(wrap.ct))})}).then(function(buf){return wrap.gz?gunzipBuf(new Uint8Array(buf)):new TextDecoder().decode(buf)}).then(function(t){return JSON.parse(t)})}
-function syncPack(){return{app:'行测成长记',version:3,updatedAt:S.meta.localAt||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,meta:{lastBackup:S.meta.lastBackup||''}}}
-function dataScore(o){o=o||S;var n=(o.papers||[]).length+(o.redo||[]).length,eb=o.errbooks||{};Object.keys(eb).forEach(function(m){Object.keys(eb[m]||{}).forEach(function(fn){n+=(eb[m][fn].rows||[]).length})});return n}
-function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.localAt=d.updatedAt||S.meta.localAt;saveAll()}finally{QUIET=false}}
-function encFileName(){var d=today().replace(/-/g,'');return '行测成长记同步_'+d+'.json'}
-function downloadEnc(wrap){var blob=new Blob([JSON.stringify(wrap)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=encFileName();a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
-function applyIfNewer(pack,opts){opts=opts||{};var lt=S.meta.localAt||S.meta.lastBackup||'',ct=pack.updatedAt||'',localN=dataScore();
- if(!lt&&localN===0){applyPack(pack);setSyncSt(true,'已用同步文件恢复（'+ (ct||'').replace('T',' ').slice(0,16)+'；以文件为准）');return{ok:true,down:true}}
- if(ct&&lt&&ct>lt){applyPack(pack);setSyncSt(true,'已用同步文件恢复（文件 '+ct.replace('T',' ').slice(0,16)+'，比本机新；后写入的为准）');return{ok:true,down:true}}
- if(ct&&lt&&ct===lt){setSyncSt(true,'与同步文件一致（'+ct.replace('T',' ').slice(0,16)+'）');return{ok:true,same:true}}
- if(lt&&ct&&lt>ct&&!opts.force){setSyncSt(false,'本机数据比较新（本机 '+lt.replace('T',' ').slice(0,16)+'，文件 '+ct.replace('T',' ').slice(0,16)+'），没有覆盖。如要强制用文件，再点一次「导入并覆盖」。');return{ok:false,older:true,pack:pack}}
- applyPack(pack);setSyncSt(true,'已用同步文件覆盖本机（以文件为准）');return{ok:true,down:true}}
-function setSyncSt(ok,msg){SYNC_ST={ok:ok,msg:msg,at:new Date().toISOString(),pending:ok===false&&/没有覆盖/.test(msg||'')};var a=$('syncBar'),b=$('s_syncSt');if(a)a.innerHTML=syncBarHtml();if(b)b.innerHTML=syncStHtml()}
-function syncStHtml(){if(!SYNC_ST.msg)return'<span class="mut">两台设备输入同一组口令：这边「导出加密同步文件」，那边「导入」。文件是密文，可以放进 OneDrive「行测成长记」文件夹或发给自己。后导入的较新文件会覆盖本机；若本机更新，会提示而不会悄悄覆盖。</span>';return'<span class="'+(SYNC_ST.ok===false?'hint':SYNC_ST.ok?'okc':'mut')+'">'+esc(SYNC_ST.msg)+'</span>'}
-function syncBarHtml(){return syncStHtml()+' <button class="btn sec sm" data-go="settings">同步设置</button>'}
-function renderSync(){if($('syncBar')){$('syncBar').innerHTML=syncBarHtml();[].forEach.call(document.querySelectorAll('#syncBar [data-go]'),function(b){b.onclick=function(){go(b.dataset.go)}})}if($('s_syncSt'))$('s_syncSt').innerHTML=syncStHtml();if($('s_syncRem'))$('s_syncRem').checked=!!rememberedPw()}
-function scheduleSync(){/* 无自动云端上传：静态页面不能安全写入私人仓库，也不把数据发到公开中转站 */ }
-function currentPw(){return SYNC_PW||rememberedPw()||(($('s_syncPw')&&$('s_syncPw').value)||'').trim()}
-function exportEnc(explicit){var pw=currentPw();if(!pw||pw.length<8){setSyncSt(false,'请先输入至少 8 个字符的同步口令');return Promise.resolve({ok:false})}
- var rem=!!($('s_syncRem')&&$('s_syncRem').checked)||!!rememberedPw();
- return encPayload(pw,syncPack()).then(function(wrap){holdPw(pw,rem);downloadEnc(wrap);setSyncSt(true,'已下载加密同步文件 '+encFileName()+'。把它放到 OneDrive 或传到手机后，用同一口令导入。');if($('s_syncPw'))$('s_syncPw').value='';if($('s_syncPw2'))$('s_syncPw2').value='';return{ok:true}}).catch(function(e){setSyncSt(false,'导出失败：'+(e&&e.message||'请重试'));return{ok:false}})}
-function importEncText(text,opts){opts=opts||{};var pw=currentPw();if(!pw||pw.length<8){setSyncSt(false,'请先输入导出时用的同一组口令');return Promise.resolve({ok:false})}
- var wrap;try{wrap=JSON.parse(text)}catch(e){setSyncSt(false,'不是有效的同步文件');return Promise.resolve({ok:false})}
- if(wrap&&wrap.app==='行测成长记'&&wrap.papers&&!wrap.ct){setSyncSt(false,'这是普通备份，请用上面的「导入备份」');return Promise.resolve({ok:false})}
- return decPayload(pw,wrap).then(function(pack){holdPw(pw,!!($('s_syncRem')&&$('s_syncRem').checked)||!!rememberedPw());var r=applyIfNewer(pack,{force:!!opts.force||SYNC_ST.pending});if(r.ok&&r.down)renderAll();return r}).catch(function(){setSyncSt(false,'口令不对，或文件无法解密。本机数据没有改动。');return{ok:false,bad:true}})}
-function bootSync(){var pw=rememberedPw();if(pw)SYNC_PW=pw;renderSync();return Promise.resolve()}
+// ---------- 云端自动同步（GitHub Private Gist；钥匙只存在本机浏览器） ----------
+var SYNC_TIMER=null,SYNC_ST={msg:'',ok:null,at:''},SYNC_INFLIGHT=null,SYNC_QUEUED=false,SYNC_LAST_AUTO=0,SYNC_FAST=false;
+var GH_FILE='xingce-growth-sync.json';
+var GH_DESC='行测成长记云端同步（私有数据，请勿公开）';
+var GH_API='https://api.github.com/gists';
+var LS_TOK=P+'gh_token',LS_GIST=P+'gh_gist_id',LS_CLOUD=P+'gh_cloud_at',LS_DIRTY=P+'gh_dirty';
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
+function lsSet(k,v){try{if(v==null||v==='')localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+function getToken(){return lsGet(LS_TOK)}
+function getGistId(){return lsGet(LS_GIST)}
+function getCloudAt(){return lsGet(LS_CLOUD)}
+function isDirty(){return lsGet(LS_DIRTY)==='1'}
+function setDirty(v){lsSet(LS_DIRTY,v?'1':'0')}
+function setCloudAt(v){lsSet(LS_CLOUD,v||'')}
+function looksLikeToken(t){t=String(t||'').trim();return /^(ghp_|github_pat_|gho_|ghu_|ghs_)/.test(t)||t.length>=20}
+function localUpdatedAt(){return(S.meta&&(S.meta.updatedAt||S.meta.localAt))||''}
+function bumpSync(fast){if(QUIET)return;S.meta=S.meta||{};S.meta.updatedAt=new Date().toISOString();S.meta.localAt=S.meta.updatedAt;try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}setDirty(true);scheduleSync(fast)}
+function scheduleSync(fast){if(!getToken())return;if(fast)SYNC_FAST=true;var ms=SYNC_FAST?300:1500;if(SYNC_TIMER)clearTimeout(SYNC_TIMER);SYNC_TIMER=setTimeout(function(){SYNC_TIMER=null;SYNC_FAST=false;syncNow({trigger:'edit'})},ms)}
+function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
+function dataScore(o){if(arguments.length===0)o=S;if(!o)return 0;if(o.data&&(o.papers==null))o=o.data;var n=(o.papers||[]).length+(o.redo||[]).length,eb=o.errbooks||o.errBooks||{};Object.keys(eb).forEach(function(m){Object.keys(eb[m]||{}).forEach(function(fn){n+=((eb[m][fn]||{}).rows||[]).length})});return n}
+function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
+function parseWhen(s){if(s==null||s==='')return 0;if(typeof s==='number'&&isFinite(s))return s;var t=Date.parse(s);if(!isNaN(t))return t;var m=String(s).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2}))?)?/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4]||0,+m[5]||0,+m[6]||0).getTime():0}
+function fileAt(f){return f?(f.importedMs||parseWhen(f.importedAt)||0):0}
+function isoMax(a,b){return(!a||(b&&b>a))?b:a}
+function unionMap(newer,older){var o={},k;newer=newer&&typeof newer==='object'&&!Array.isArray(newer)?newer:{};older=older&&typeof older==='object'&&!Array.isArray(older)?older:{};for(k in older)if(Object.prototype.hasOwnProperty.call(older,k))o[k]=older[k];for(k in newer)if(Object.prototype.hasOwnProperty.call(newer,k))o[k]=newer[k];return o}
+function mergeAns(newer,older){var keys={},k,o={};newer=newer||{};older=older||{};Object.keys(older).concat(Object.keys(newer)).forEach(function(p){keys[p]=1});for(k in keys)o[k]=unionMap(newer[k],older[k]);return o}
+function paperKey(p){return(p&&p.id)?('id:'+p.id):('nd:'+(p&&p.name||'')+'|'+(p&&p.date||''))}
+function mergePapers(newer,older){var map={},order=[],list=(older||[]).concat(newer||[]);list.forEach(function(p){if(!p||typeof p!=='object')return;var k=paperKey(p);if(!map[k])order.push(k);map[k]=p});
+ var byName={};order.forEach(function(k){var p=map[k],nk=(p.name||'')+'';if(!nk)return;if(!byName[nk])byName[nk]=p;});
+ var seen={},out=[];order.forEach(function(k){var p=map[k],nk=p.name||'';if(nk&&byName[nk]&&byName[nk]!==p)return;if(p.id){if(seen[p.id])return;seen[p.id]=1}out.push(p)});return out}
+function mergeRedo(a,b){var map={},out=[];(a||[]).concat(b||[]).forEach(function(x){if(!x||typeof x!=='object')return;var id=x.id||(x.at+'|'+(x.label||''));if(map[id])return;map[id]=x;out.push(x)});
+ out.sort(function(x,y){return parseWhen(x.at||x.date)-parseWhen(y.at||y.date)});return out.slice(-300)}
+function mergeMarks(newer,older){newer=normMarks(newer);older=normMarks(older);var tags=older.tags.slice();(newer.tags||[]).forEach(function(t){if(tags.indexOf(t)<0)tags.push(t)});return{tags:tags.length?tags:['易混','再看'],m:unionMap(newer.m,older.m)}}
+function mergeErrbooks(newer,older){newer=newer||{};older=older||{};var out={},mods={};Object.keys(older).concat(Object.keys(newer)).forEach(function(m){mods[m]=1});
+ Object.keys(mods).forEach(function(m){var a=newer[m]||{},b=older[m]||{},files={},o={};Object.keys(b).concat(Object.keys(a)).forEach(function(fn){files[fn]=1});
+  Object.keys(files).forEach(function(fn){var nf=a[fn],of=b[fn];if(!nf)o[fn]=of;else if(!of)o[fn]=nf;else{var nr=(nf.rows||[]).length,orr=(of.rows||[]).length;if(nr&&!orr)o[fn]=nf;else if(orr&&!nr)o[fn]=of;else o[fn]=fileAt(nf)>=fileAt(of)?nf:of}});
+  out[m]=o});return out}
+function mergeMeta(a,b){var la=(a&&a.lastBackup)||'',lb=(b&&b.lastBackup)||'';return{lastBackup:isoMax(la,lb)||''}}
+function mergePack(localPack,cloudPack){var lt=localPack&&localPack.updatedAt||'',ct=cloudPack&&cloudPack.updatedAt||'';
+ var newer,older;if(ct&&(!lt||ct>lt)){newer=cloudPack;older=localPack}else{newer=localPack;older=cloudPack}
+ newer=newer||{};older=older||{};
+ return{app:'行测成长记',version:3,updatedAt:new Date().toISOString(),settings:newer.settings||older.settings,papers:mergePapers(newer.papers,older.papers),errbooks:mergeErrbooks(newer.errbooks||newer.errBooks,older.errbooks||older.errBooks),ans:mergeAns(newer.ans,older.ans),redo:mergeRedo(newer.redo,older.redo),marks:mergeMarks(newer.marks,older.marks),mast:unionMap(newer.mast,older.mast),meta:mergeMeta(newer.meta,older.meta)}}
+function fmtSyncTime(iso){if(!iso)return'';var d=new Date(iso);if(isNaN(d.getTime()))return'';var n=new Date(),same=d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
+ return same?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function setSyncSt(ok,msg){SYNC_ST={ok:ok,msg:msg,at:new Date().toISOString()};var a=$('syncBar'),b=$('s_syncSt');if(a)a.innerHTML=syncBarHtml();if(b)b.innerHTML=syncStHtml();bindSyncBar()}
+function syncStHtml(){if(SYNC_ST.msg)return'<span class="'+(SYNC_ST.ok===false?'hint':SYNC_ST.ok?'okc':'mut')+'">'+esc(SYNC_ST.msg)+'</span>';
+ if(getToken())return'<span class="mut">同步钥匙已保存在本机浏览器。打开页面或回到前台时会自动同步。</span>';
+ return'<span class="mut">用你自己的 GitHub 私有空间同步电脑和手机。公开网页里不会出现你的错题本。</span>'}
+function syncBarHtml(){if(!getToken()&&!SYNC_ST.msg)return'<span class="mut">电脑和手机要自动同步时，到「设置」里粘贴同步钥匙并开启云端自动同步。</span> <button class="btn sec sm" data-go="settings">去开启同步</button>';
+ var extra=' <button class="btn sec sm" data-sync="1">立即同步</button> <button class="btn sec sm" data-go="settings">同步设置</button>';
+ return syncStHtml()+extra}
+function bindSyncBar(){if(!$('syncBar'))return;[].forEach.call(document.querySelectorAll('#syncBar [data-go]'),function(b){b.onclick=function(){go(b.dataset.go)}});
+ [].forEach.call(document.querySelectorAll('#syncBar [data-sync]'),function(b){b.onclick=function(){setSyncSt(null,'正在同步…');syncNow({trigger:'manual'})}})}
+function renderSync(){if($('syncBar'))$('syncBar').innerHTML=syncBarHtml();if($('s_syncSt'))$('s_syncSt').innerHTML=syncStHtml();bindSyncBar()}
+function ghHeaders(json){var h={Authorization:'Bearer '+getToken(),Accept:'application/vnd.github+json'};if(json)h['Content-Type']='application/json';return h}
+function ghFetch(url,opts){opts=opts||{};var o={method:opts.method||'GET',headers:ghHeaders(!!opts.body),cache:'no-store'};if(opts.body!=null)o.body=typeof opts.body==='string'?opts.body:JSON.stringify(opts.body);
+ return fetch(url,o).then(function(r){return r.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}return{ok:r.ok,status:r.status,j:j,t:t}})})}
+function classifyGhErr(res,net){if(net)return'网络暂不可用，数据已保存在本机，连网后会自动再同步。';
+ var st=res&&res.status,msg=(res&&res.j&&(res.j.message||res.j.error))||'';
+ if(st===401)return'同步钥匙无效或已过期，请检查是否复制完整（或重新生成）。';
+ if(st===403&&/rate\s*limit/i.test(msg))return'请求太频繁，请稍后再试。';
+ if(st===403)return'权限不足，请确认生成钥匙时勾选了 gist 权限。';
+ return'同步失败'+(st?'（'+st+'）':'')+'，请稍后重试。'}
+function gistFile(g){return g&&g.files&&(g.files[GH_FILE]||null)}
+function parsePackText(text){if(!text)return null;var p=JSON.parse(text);if(!p||typeof p!=='object')return null;return p}
+function readGistPack(g){var f=gistFile(g);if(!f)return Promise.resolve({gist:g,pack:null,stamp:g&&g.updated_at||''});
+ var go=function(text){var pack=null;try{pack=parsePackText(text)}catch(e){pack=null}return{gist:g,pack:pack,stamp:(pack&&pack.updatedAt)||(g&&g.updated_at)||''}};
+ if(f.truncated&&f.raw_url)return fetch(f.raw_url,{headers:ghHeaders(false),cache:'no-store'}).then(function(r){if(!r.ok)throw {status:r.status,j:null};return r.text()}).then(go);
+ return Promise.resolve(go(f.content))}
+function searchGists(){function page(n,best){if(n>3)return Promise.resolve(best);return ghFetch(GH_API+'?per_page=100&page='+n).then(function(res){if(!res.ok)throw res;var arr=Array.isArray(res.j)?res.j:[];arr.forEach(function(g){if(gistFile(g)&&(!best||(g.updated_at||'')>(best.updated_at||'')))best=g});if(arr.length<100)return best;return page(n+1,best)})}return page(1,null)}
+function loadCloud(){var id=getGistId();
+ function afterList(g){if(!g)return{gist:null,pack:null,stamp:''};lsSet(LS_GIST,g.id);return ghFetch(GH_API+'/'+g.id).then(function(res){if(res.status===404){lsSet(LS_GIST,'');return loadCloud()}if(!res.ok)throw res;return readGistPack(res.j)})}
+ if(id)return ghFetch(GH_API+'/'+id).then(function(res){if(res.status===404){lsSet(LS_GIST,'');return searchGists().then(afterList)}if(!res.ok)throw res;return readGistPack(res.j)});
+ return searchGists().then(afterList)}
+function pushPack(pack,gist){var body={description:GH_DESC,files:{}};body.files[GH_FILE]={content:JSON.stringify(pack)};
+ if(gist&&gist.id)return ghFetch(GH_API+'/'+gist.id,{method:'PATCH',body:body}).then(function(res){if(res.status===404){lsSet(LS_GIST,'');return pushPack(pack,null)}if(!res.ok)throw res;lsSet(LS_GIST,res.j.id);return res.j});
+ body.public=false;return ghFetch(GH_API,{method:'POST',body:body}).then(function(res){if(!res.ok)throw res;lsSet(LS_GIST,res.j.id);return res.j})}
+function okMsg(kind,stamp){var t=fmtSyncTime(stamp||new Date().toISOString());
+ if(kind==='up')return'已同步到云端'+(t?'（'+t+'）':'');
+ if(kind==='down')return'已从云端同步'+(t?'（'+t+'）':'');
+ if(kind==='merge')return'两边都有新改动，已合并并同步'+(t?'（'+t+'）':'');
+ return'云端自动同步已开启'+(t?' · 上次同步 '+t:'')}
+function finishOk(kind,stamp,redraw){setDirty(false);setCloudAt(stamp||'');setSyncSt(true,okMsg(kind,stamp));if(redraw)renderAll();return{ok:true,kind:kind,stamp:stamp}}
+function syncNow(opts){opts=opts||{};if(!getToken())return Promise.resolve({ok:false,reason:'no-token'});
+ if(SYNC_INFLIGHT){SYNC_QUEUED=true;return SYNC_INFLIGHT}
+ var run=function(){var localPack=syncPack();
+  return loadCloud().then(function(cloud){var pack=cloud.pack,stamp=cloud.stamp||(pack&&pack.updatedAt)||'',last=getCloudAt(),dirty=isDirty(),localN=dataScore(S),cloudN=dataScore(pack),cloudChanged=!!(stamp&&last&&stamp!==last),sameAt=!!(pack&&pack.updatedAt&&pack.updatedAt===localUpdatedAt());
+   // A: empty local, cloud has data
+   if(localN===0&&cloudN>0){applyPack(pack);return finishOk('down',stamp||pack.updatedAt,true)}
+   // B: empty cloud, local has data
+   if(cloudN===0&&localN>0){return pushPack(localPack,cloud.gist).then(function(g){var st=(localPack.updatedAt)||(g&&g.updated_at)||'';return finishOk('up',st,false)})}
+   // both empty
+   if(localN===0&&cloudN===0){setDirty(false);if(stamp)setCloudAt(stamp);setSyncSt(true,'已开启云端自动同步，还没有需要同步的数据。');return{ok:true,kind:'empty'}}
+   // first connect: both sides have data → always merge (never silently drop either side)
+   var bothFresh=!last&&localN>0&&cloudN>0;
+   if(bothFresh){var merged0=mergePack(localPack,pack||{});applyPack(merged0);return pushPack(merged0,cloud.gist).then(function(g){var st=merged0.updatedAt||(g&&g.updated_at)||'';return finishOk('merge',st,true)})}
+   // C: local not dirty
+   if(!dirty){if(stamp&&stamp!==last&&pack&&!sameAt){applyPack(pack);return finishOk('down',stamp||pack.updatedAt,true)}setSyncSt(true,okMsg('same',stamp||localUpdatedAt()||last));if(stamp)setCloudAt(stamp);return{ok:true,kind:'same'}}
+   // D: dirty and cloud unchanged (or first push)
+   var canPush=(last&&stamp===last)||(!last&&(!pack||(localPack.updatedAt||'')>=(pack.updatedAt||'')));
+   if(canPush){return pushPack(localPack,cloud.gist).then(function(g){var st=localPack.updatedAt||(g&&g.updated_at)||'';return finishOk('up',st,false)})}
+   // E: dirty and cloud changed since lastCloudAt
+   var merged=mergePack(localPack,pack||{});applyPack(merged);
+   return pushPack(merged,cloud.gist).then(function(g){var st=merged.updatedAt||(g&&g.updated_at)||'';return finishOk('merge',st,true)})}).catch(function(e){var net=!(e&&e.status);var msg=classifyGhErr(e,net);setSyncSt(false,msg);return{ok:false,err:msg,status:e&&e.status}})};
+ SYNC_INFLIGHT=Promise.resolve().then(run).then(function(r){SYNC_INFLIGHT=null;if(SYNC_QUEUED){SYNC_QUEUED=false;return syncNow({trigger:'queued'}).then(function(){return r})}return r},function(e){SYNC_INFLIGHT=null;throw e});
+ return SYNC_INFLIGHT}
+function maybeAuto(trigger){if(!getToken())return;var now=Date.now();
+ if(trigger==='resume'&&now-SYNC_LAST_AUTO<15000)return;
+ if(trigger==='online'&&!isDirty()&&now-SYNC_LAST_AUTO<15000)return;
+ SYNC_LAST_AUTO=now;syncNow({trigger:trigger})}
+function bootSync(){renderSync();if(!getToken())return Promise.resolve();setSyncSt(null,'正在同步…');SYNC_LAST_AUTO=Date.now();return syncNow({trigger:'boot'}).then(function(){renderAll()})}
 function bindSync(){if(!$('s_syncGo'))return;
- $('s_syncGo').onclick=function(){var pw=($('s_syncPw').value||'').trim(),c=($('s_syncPw2').value||'').trim(),rem=$('s_syncRem').checked;
-  if(pw.length<8){setSyncSt(false,'口令至少 8 个字符，建议用一句只有你记得的话。');return}
-  if(c&&c!==pw){setSyncSt(false,'两次输入的口令不一致');return}
-  if(!c&&!rememberedPw()&&!SYNC_PW){setSyncSt(false,'第一次请再输入一遍口令，以免写错后文件无法打开。');return}
-  holdPw(pw,rem);exportEnc(true)};
- $('s_syncNow').onclick=function(){exportEnc(true)};
- $('s_syncOff').onclick=function(){forgetPw(false);if($('s_syncPw'))$('s_syncPw').value='';if($('s_syncPw2'))$('s_syncPw2').value='';setSyncSt(true,'已在本机忘掉口令。加密文件还在，用同一口令仍可导入。');renderSync()};
- if($('s_syncImport'))$('s_syncImport').onclick=function(){$('s_syncFile').click()};
- if($('s_syncFile'))$('s_syncFile').onchange=function(){var f=$('s_syncFile').files[0];if(!f)return;f.text().then(function(t){return importEncText(t)}).then(function(){$('s_syncFile').value=''})}}
-window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_exportEnc:exportEnc,_importEnc:importEncText,_holdPw:holdPw,_syncSt:function(){return SYNC_ST},_encPayload:encPayload,_decPayload:decPayload};
+ $('s_syncGo').onclick=function(){var inp=$('s_syncTok'),tok=((inp&&inp.value)||'').trim();
+  if(tok){if(!looksLikeToken(tok)){setSyncSt(false,'请粘贴完整的同步钥匙（通常以 ghp_ 或 github_pat_ 开头）。');return}lsSet(LS_TOK,tok);if(inp)inp.value=''}
+  if(!getToken()){setSyncSt(false,'请先粘贴同步钥匙。');return}
+  setSyncSt(null,'正在同步…');syncNow({trigger:'connect'}).then(function(){renderAll()})};
+ $('s_syncNow').onclick=function(){var inp=$('s_syncTok'),tok=((inp&&inp.value)||'').trim();if(tok){if(looksLikeToken(tok)){lsSet(LS_TOK,tok);if(inp)inp.value=''}}if(!getToken()){setSyncSt(false,'请先粘贴同步钥匙并点「连接并开启自动同步」。');return}setSyncSt(null,'正在同步…');syncNow({trigger:'manual'})};
+ $('s_syncOff').onclick=function(){lsSet(LS_TOK,'');lsSet(LS_GIST,'');lsSet(LS_CLOUD,'');lsSet(LS_DIRTY,'');if($('s_syncTok'))$('s_syncTok').value='';setSyncSt(true,'已在本机断开同步。云端私有空间还在，本机数据也还在。重新粘贴同一把钥匙即可继续同步。');renderSync()};
+ if(!bindSync._ev){bindSync._ev=1;document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')maybeAuto('resume')});window.addEventListener('focus',function(){maybeAuto('resume')});window.addEventListener('online',function(){maybeAuto('online')})}}
+window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()}};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
