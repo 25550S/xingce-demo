@@ -1063,7 +1063,7 @@ function fetchFirst(urls){var i=0;function next(){if(i>=urls.length)return Promi
 function unpackQb(data){var papers=data.papers||{},out=[];Object.keys(papers).forEach(function(name){var p=papers[name],qs={};Object.keys(p.q||{}).forEach(function(n){var r=p.q[n]||[];qs[n]={s:r[0]||'',o:r[1]||['','','',''],f:r[2]||'',mi:r[3]!=null?r[3]:-1}});out.push({name:name,file:'内置题库',qs:qs,mats:p.m||[],count:p.c||Object.keys(qs).length,figs:p.f||0,builtin:true,at:'内置'})});return{papers:out,ans:data.ans||{}}}
 function applyBuiltinAns(map,force){var ch=false;Object.keys(map||{}).forEach(function(p){var s=map[p];if(typeof s!=='string')return;for(var i=0;i<s.length;i++)if(s.charAt(i)!=='-'){S.ans[p]=S.ans[p]||{};if(force?S.ans[p][i+1]!==s.charAt(i):!S.ans[p][i+1]){S.ans[p][i+1]=s.charAt(i);ch=true}}});if(ch){var q=QUIET;QUIET=true;save('ans');QUIET=q}}
 function missingBuiltin(data){var names=data&&data.papers?Object.keys(data.papers):[];if(!names.length){for(var i=1;i<=12;i++)names.push('套题'+i)}return names.filter(function(n){return!QB[n]})}
-var QB_VER=2;
+var QB_VER=3;
 function loadBuiltinTiku(){if(!isHttp())return Promise.resolve({ok:false,reason:'file'});
  var haveV=+(localStorage.getItem(P+'qb_builtin_v')||1),stale=haveV<QB_VER;
  if(!missingBuiltin().length&&!stale)return Promise.resolve({ok:true,cached:true});
