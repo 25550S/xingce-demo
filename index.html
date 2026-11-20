@@ -142,6 +142,26 @@ button,a,.opt,nav button{touch-action:manipulation}
   table{font-size:12px}
   td,th{padding:8px 6px;word-break:break-word}
 }
+
+.prink-wrap{position:relative}
+.prink-body{position:relative;z-index:0}
+.prink-canvas{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;pointer-events:none;touch-action:none}
+.prink-canvas.on{pointer-events:auto;cursor:crosshair}
+.prink-canvas.on.pass{touch-action:pan-y;cursor:default}
+#practice.ink-on{padding-bottom:72px}
+#pr_inkBtn.on{background:var(--acc2);color:var(--acc);border-color:#c9cfee}
+.prink-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));z-index:36;display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 6px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 8px;box-shadow:0 4px 16px rgba(20,20,30,.08);box-sizing:border-box;width:max-content;max-width:calc(100vw - 16px)}
+.prink-bar.on{display:flex}
+.prink-bar button{min-height:32px;padding:4px 9px;font-size:12px;border-radius:6px;flex:0 0 auto}
+.prink-bar button.on{background:var(--acc2);color:var(--acc);border-color:#c9cfee}
+.prink-dot{width:22px;height:22px;min-height:22px;padding:0;border-radius:50%;border:1px solid var(--line);cursor:pointer}
+.prink-dot.on{outline:2px solid var(--acc);outline-offset:1px;border-color:transparent}
+@media(max-width:720px){
+  .prink-bar{width:calc(100vw - 16px);padding:5px 6px;gap:3px 4px;flex-wrap:nowrap;overflow-x:auto}
+  .prink-bar button.btn,.prink-bar button{min-height:34px;padding:4px 7px;font-size:12px}
+  .prink-bar .prink-dot{width:22px;height:22px;min-height:22px;min-width:22px;padding:0}
+  #practice.ink-on{padding-bottom:72px}
+}
 </style></head><body>
 <header>
   <h1>行测<span>成长记</span></h1>
@@ -311,7 +331,7 @@ button,a,.opt,nav button{touch-action:manipulation}
 <h3>4. 错题重做</h3><ul>
 <li>用网页（手机或电脑）打开时，1 期 12 套卷的题目和答案会自动加载，不用导入题库。</li><li>从 OneDrive 双击打开这个 html 文件时：打开「错题重做」，点「选择题库文件夹」，选「1/题库」文件夹（试卷 txt 和答案汇总会一起导入）。只需做一次，题目保存在本浏览器里。1 期 12 套卷的答案已经内置。</li><li>以后如果有新的套卷，仍可用「选择题库文件夹」补充。数据只存在你正在用的这个浏览器里，换手机或换浏览器后需要重新导入错题本，建议定期备份。</li>
 <li>在套卷详情里点「重做本卷全部错题」，或选一个模块「重做该模块全部套卷错题」。也可以在「错题重做」页按套卷、模块开始。</li>
-<li>做题时一屏一题，点选项作答，右边答题卡可以跳题。每题和总用时自动计时，回到同一题会接着计时。「查看答案」会显示正确选项和你的复盘笔记。</li>
+<li>做题时一屏一题，点选项作答，右边答题卡可以跳题。每题和总用时自动计时，回到同一题会接着计时。「查看答案」会显示正确选项和你的复盘笔记。</li><li>做题时点「笔记」，可用手写笔在题目和选项上做记号（笔、荧光笔、红/蓝/黑、橡皮、撤销、清空）。记号只留在这一次练习里，交卷或退出后就会清除，不会写入备份或云端同步。用手写笔时，手指仍可滚动和点选项。</li>
 <li>做完点「交卷」，结果页里你选对的选项是绿色；选错的是红色，正确答案标绿色；没作答的会标出来。每次重做都会保存在「重做记录」里。</li>
 <li>重做成绩不影响套卷总分和对题数。同一道题<b>连续 2 次重做都做对、并且没有看答案</b>，自动算「已掌握」；也可以点题目旁的「标为已掌握」手动标记（再点一次取消）。手动标为掌握后如果重做又做错，会自动取消。</li><li>设置里「已掌握的错题不计入错题扣分」默认打开：已掌握的错题不再参与五维的薄弱考点扣分（基础正确率分不变）。关掉后五维完全不受重做影响。</li>
 <li>含图的题会提示去看原 PDF 的第几页。没有导入题目的题会显示「题目未导入」，仍可以按 A–D 作答。</li></ul>
@@ -690,11 +710,122 @@ function setMastered(key,v){S.mast[key]={v:!!v,at:new Date().toISOString()};save
 
 // ---------- 重做会话 ----------
 var SES=null,TIMER=null;
+var INK_COLORS={red:'#b4433b',blue:'#2f3e8f',black:'#1f2328'};
+var INK_RO=null,INK_CUR=null;
+function inkInit(){return{on:false,tool:'pen',color:'red',penSeen:false,lastPen:0,pages:{}}}
+function inkState(){if(!SES)return null;if(!SES.ink)SES.ink=inkInit();return SES.ink}
+function inkDiscard(){if(SES)SES.ink=null;if(INK_RO){try{INK_RO.disconnect()}catch(e){}INK_RO=null}INK_CUR=null}
+function inkPage(){var s=inkState();if(!s)return{strokes:[],hist:[]};var k=String(SES.cur);if(!s.pages[k])s.pages[k]={strokes:[],hist:[]};return s.pages[k]}
+function inkBarHtml(){var s=inkState()||inkInit();
+ var h='<div class="prink-bar'+(s.on?' on':'')+'" id="pr_inkBar">';
+ h+='<button type="button" class="btn sec sm'+(s.tool==='pen'?' on':'')+'" data-ink-tool="pen">笔</button>';
+ h+='<button type="button" class="btn sec sm'+(s.tool==='hi'?' on':'')+'" data-ink-tool="hi">荧光笔</button>';
+ h+='<button type="button" class="prink-dot'+(s.color==='red'?' on':'')+'" data-ink-color="red" title="红" style="background:'+INK_COLORS.red+'"></button>';
+ h+='<button type="button" class="prink-dot'+(s.color==='blue'?' on':'')+'" data-ink-color="blue" title="蓝" style="background:'+INK_COLORS.blue+'"></button>';
+ h+='<button type="button" class="prink-dot'+(s.color==='black'?' on':'')+'" data-ink-color="black" title="黑" style="background:'+INK_COLORS.black+'"></button>';
+ h+='<button type="button" class="btn sec sm'+(s.tool==='erase'?' on':'')+'" data-ink-tool="erase">橡皮</button>';
+ h+='<button type="button" class="btn sec sm" id="pr_inkUndo">撤销</button>';
+ h+='<button type="button" class="btn sec sm" id="pr_inkClear">清空</button></div>';
+ return h}
+function inkApplyStyle(ctx,stroke){var hi=stroke.tool==='hi',col=INK_COLORS[stroke.color]||INK_COLORS.black;
+ if(hi){ctx.strokeStyle=col;ctx.globalAlpha=0.28;ctx.lineWidth=stroke.width||18;ctx.globalCompositeOperation='source-over'}
+ else{ctx.strokeStyle=col;ctx.globalAlpha=1;ctx.lineWidth=stroke.width||2.4;ctx.globalCompositeOperation='source-over'}
+ ctx.lineCap='round';ctx.lineJoin='round';ctx.fillStyle=ctx.strokeStyle}
+function inkScale(stroke,w,h){var sw=stroke.w||w,sh=stroke.h||h;return{x:w/(sw||w||1),y:h/(sh||h||1)}}
+function inkDrawStroke(ctx,stroke,w,h){var pts=stroke.points||[];if(!pts.length)return;var sc=inkScale(stroke,w,h),sx=sc.x,sy=sc.y;
+ inkApplyStyle(ctx,stroke);
+ if(pts.length===1||stroke.dot){var p=pts[0],r=(stroke.tool==='hi'?8:1.2)*((p.p||0.5)+0.4);ctx.beginPath();ctx.arc(p.x*sx,p.y*sy,r,0,Math.PI*2);ctx.globalAlpha=stroke.tool==='hi'?0.28:1;ctx.fill();ctx.globalAlpha=1;return}
+ if(stroke.tool==='hi'||!pts.some(function(p,i){return i&&Math.abs((p.p||0.5)-(pts[0].p||0.5))>0.08})){
+  ctx.beginPath();ctx.moveTo(pts[0].x*sx,pts[0].y*sy);
+  if(pts.length===2)ctx.lineTo(pts[1].x*sx,pts[1].y*sy);
+  else{for(var i=1;i<pts.length-1;i++){var mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2;ctx.quadraticCurveTo(pts[i].x*sx,pts[i].y*sy,mx*sx,my*sy)}ctx.lineTo(pts[pts.length-1].x*sx,pts[pts.length-1].y*sy)}
+  ctx.stroke();ctx.globalAlpha=1;return}
+ ctx.beginPath();ctx.moveTo(pts[0].x*sx,pts[0].y*sy);
+ for(var j=1;j<pts.length;j++){var a=pts[j-1],b=pts[j],mx2=(a.x+b.x)/2,my2=(a.y+b.y)/2,pr=(a.p||0.5)*0.5+(b.p||0.5)*0.5;
+  ctx.lineWidth=Math.max(0.8,(stroke.base||2.2)*(0.45+0.9*pr));ctx.quadraticCurveTo(a.x*sx,a.y*sy,mx2*sx,my2*sy);ctx.stroke();ctx.beginPath();ctx.moveTo(mx2*sx,my2*sy)}
+ ctx.lineTo(pts[pts.length-1].x*sx,pts[pts.length-1].y*sy);ctx.stroke();ctx.globalAlpha=1}
+function inkRedraw(){var cvs=$('pr_ink');if(!cvs)return;var ctx=cvs.getContext('2d'),w=cvs._w||cvs.clientWidth,h=cvs._h||cvs.clientHeight;
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cvs.width,cvs.height);ctx.restore();
+ var dpr=cvs._dpr||window.devicePixelRatio||1;ctx.setTransform(dpr,0,0,dpr,0,0);
+ var pg=inkPage();(pg.strokes||[]).forEach(function(st){inkDrawStroke(ctx,st,w,h)});
+ if(INK_CUR)inkDrawStroke(ctx,INK_CUR,w,h)}
+function inkResize(){var wrap=$('pr_inkWrap'),cvs=$('pr_ink');if(!wrap||!cvs||!SES||SES.done)return;
+ var dpr=window.devicePixelRatio||1,w=Math.max(1,wrap.clientWidth),h=Math.max(1,wrap.clientHeight);
+ if(cvs._w===w&&cvs._h===h&&cvs._dpr===dpr){inkRedraw();return}
+ cvs.width=Math.max(1,Math.round(w*dpr));cvs.height=Math.max(1,Math.round(h*dpr));cvs.style.width=w+'px';cvs.style.height=h+'px';
+ var ctx=cvs.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);cvs._w=w;cvs._h=h;cvs._dpr=dpr;inkRedraw()}
+function inkPt(ev,cvs){var r=cvs.getBoundingClientRect();var p=ev.pressure;if(p==null||(p===0&&ev.buttons))p=0.5;return{x:ev.clientX-r.left,y:ev.clientY-r.top,p:p}}
+function inkBaseW(tool){return tool==='hi'?18:2.2}
+function inkDist(a,b){var dx=a.x-b.x,dy=a.y-b.y;return Math.sqrt(dx*dx+dy*dy)}
+function inkIgnoreTouch(ev,s){if(ev.pointerType!=='touch')return false;if(s.penSeen)return true;if(s.lastPen&&Date.now()-s.lastPen<800)return true;return false}
+function inkPalmReject(ev,s){return ev.pointerType==='touch'&&s.lastPen&&Date.now()-s.lastPen<800}
+function inkHit(stroke,pt,w,h){var sc=inkScale(stroke,w,h),rad=(stroke.tool==='hi'?14:8),pts=stroke.points||[],i,x,y;
+ for(i=0;i<pts.length;i++){x=pts[i].x*sc.x;y=pts[i].y*sc.y;if((x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y)<=rad*rad)return true}return false}
+function inkSetMode(){var s=inkState(),cvs=$('pr_ink'),bar=$('pr_inkBar'),btn=$('pr_inkBtn'),pr=$('practice');
+ if(pr)pr.classList.toggle('ink-on',!!(s&&s.on));
+ if(btn){btn.classList.toggle('on',!!(s&&s.on));btn.setAttribute('aria-pressed',s&&s.on?'true':'false')}
+ if(bar)bar.classList.toggle('on',!!(s&&s.on));
+ if(!cvs||!s)return;
+ cvs.classList.toggle('on',!!s.on);
+ cvs.classList.toggle('pass',!!(s.on&&s.penSeen&&Date.now()-s.lastPen>800));
+ cvs.style.touchAction=(!s.on)?'auto':(s.penSeen&&Date.now()-(s.lastPen||0)>800)?'pan-y':'none'}
+function inkForward(ev){var cvs=$('pr_ink');if(!cvs)return;cvs.style.pointerEvents='none';var el=document.elementFromPoint(ev.clientX,ev.clientY);cvs.style.pointerEvents='';
+ if(!el||el===cvs||(el.id==='pr_inkBar')||(el.closest&&el.closest('#pr_inkBar')))return;
+ var b=el.closest?el.closest('button,[data-opt],[data-nav]'):null;if(b)b.click()}
+function inkPush(stroke){var pg=inkPage();pg.hist.push({t:'add',n:1});pg.strokes.push(stroke)}
+function inkEraseAt(pt,w,h){var pg=inkPage(),keep=[],drop=[],i,st;
+ for(i=0;i<pg.strokes.length;i++){st=pg.strokes[i];if(inkHit(st,pt,w,h))drop.push(st);else keep.push(st)}
+ if(drop.length){pg.strokes=keep;pg.hist.push({t:'drop',strokes:drop});return true}return false}
+function inkUndo(){var pg=inkPage();if(!pg.hist.length)return;var op=pg.hist.pop();
+ if(op.t==='add')pg.strokes=pg.strokes.slice(0,Math.max(0,pg.strokes.length-(op.n||1)));
+ else if(op.t==='drop'&&op.strokes)pg.strokes=pg.strokes.concat(op.strokes);
+ else if(op.t==='clear'&&op.strokes)pg.strokes=op.strokes.slice();
+ inkRedraw()}
+function inkClear(){var pg=inkPage();if(!pg.strokes.length)return;if(!confirm('清空本题笔记？'))return;pg.hist.push({t:'clear',strokes:pg.strokes.slice()});pg.strokes=[];inkRedraw()}
+function inkRefreshBar(){var s=inkState(),bar=$('pr_inkBar');if(!s||!bar)return;
+ [].forEach.call(bar.querySelectorAll('[data-ink-tool]'),function(b){b.classList.toggle('on',b.dataset.inkTool===s.tool)});
+ [].forEach.call(bar.querySelectorAll('[data-ink-color]'),function(b){b.classList.toggle('on',b.dataset.inkColor===s.color)});}
+function bindInk(){if(!SES||SES.done)return;var wrap=$('pr_inkWrap'),cvs=$('pr_ink'),s=inkState();if(!wrap||!cvs)return;
+ if(INK_RO){try{INK_RO.disconnect()}catch(e){}INK_RO=null}
+ inkSetMode();inkResize();
+ if(window.ResizeObserver){INK_RO=new ResizeObserver(function(){inkResize()});INK_RO.observe(wrap);if($('pr_inkBody'))INK_RO.observe($('pr_inkBody'))}
+ if($('pr_inkBtn'))$('pr_inkBtn').onclick=function(){var st=inkState();st.on=!st.on;inkSetMode();inkResize()};
+ [].forEach.call(document.querySelectorAll('#pr_inkBar [data-ink-tool]'),function(b){b.onclick=function(){inkState().tool=b.dataset.inkTool;inkRefreshBar()}});
+ [].forEach.call(document.querySelectorAll('#pr_inkBar [data-ink-color]'),function(b){b.onclick=function(){var st=inkState();st.color=b.dataset.inkColor;if(st.tool==='erase')st.tool='pen';inkRefreshBar()}});
+ if($('pr_inkUndo'))$('pr_inkUndo').onclick=function(){inkUndo()};
+ if($('pr_inkClear'))$('pr_inkClear').onclick=function(){inkClear()};
+ var draw=null,tap=null;
+ cvs.onpointerdown=function(ev){var st=inkState();if(!st||!st.on)return;
+  if(ev.pointerType==='pen'){st.penSeen=true;st.lastPen=Date.now();inkSetMode()}
+  if(inkIgnoreTouch(ev,st)){if(inkPalmReject(ev,st)){try{ev.preventDefault()}catch(e){}}else{tap={x:ev.clientX,y:ev.clientY,id:ev.pointerId}}return}
+  ev.preventDefault();
+  try{cvs.setPointerCapture(ev.pointerId)}catch(e){}
+  var pt=inkPt(ev,cvs),tool=st.tool,w=inkBaseW(tool);
+  if(tool==='erase'){draw={id:ev.pointerId,tool:'erase',erased:false,w:cvs._w,h:cvs._h};if(inkEraseAt(pt,cvs._w,cvs._h)){draw.erased=true;inkRedraw()}return}
+  INK_CUR={tool:tool,color:st.color,width:w*(0.5+0.8*(pt.p||0.5)),base:w,w:cvs._w,h:cvs._h,points:[pt]};
+  draw={id:ev.pointerId,tool:tool};inkRedraw()};
+ cvs.onpointermove=function(ev){var st=inkState();if(!st||!st.on)return;
+  if(ev.pointerType==='pen')st.lastPen=Date.now();
+  if(tap&&ev.pointerId===tap.id){if(Math.abs(ev.clientX-tap.x)>10||Math.abs(ev.clientY-tap.y)>10)tap=null;return}
+  if(!draw||ev.pointerId!==draw.id)return;
+  ev.preventDefault();
+  var pt=inkPt(ev,cvs);
+  if(draw.tool==='erase'){if(inkEraseAt(pt,cvs._w,cvs._h)){draw.erased=true;inkRedraw()}return}
+  if(!INK_CUR)return;var last=INK_CUR.points[INK_CUR.points.length-1];if(last&&inkDist(last,pt)<0.7)return;INK_CUR.points.push(pt);inkRedraw()};
+ function endDraw(ev){var st=inkState();if(ev.pointerType==='pen'&&st)st.lastPen=Date.now();
+  if(tap&&ev.pointerId===tap.id){var t=tap;tap=null;if(Math.abs(ev.clientX-t.x)<10&&Math.abs(ev.clientY-t.y)<10)inkForward(ev);return}
+  if(!draw||ev.pointerId!==draw.id)return;
+  if(draw.tool!=='erase'&&INK_CUR&&INK_CUR.points.length){if(INK_CUR.points.length===1)INK_CUR.dot=true;inkPush(INK_CUR)}
+  INK_CUR=null;draw=null;try{cvs.releasePointerCapture(ev.pointerId)}catch(e){}inkRedraw();inkSetMode()}
+ cvs.onpointerup=endDraw;cvs.onpointercancel=endDraw;
+ if(!bindInk._win){bindInk._win=1;window.addEventListener('resize',function(){if(SES&&!SES.done)inkResize()});window.addEventListener('orientationchange',function(){setTimeout(function(){if(SES&&!SES.done)inkResize()},180)});if(window.visualViewport)window.visualViewport.addEventListener('resize',function(){if(SES&&!SES.done)inkResize()})}
+}
+
 function sortRows(rows){return rows.slice().sort(function(a,b){return nat(a.src,b.src)||(a.q||999)-(b.q||999)})}
 function fmt(ms){var s=Math.round(ms/1000),m=Math.floor(s/60);s=s%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s}
 function startSession(rows,label){var seen={},items=[];rows.forEach(function(r){if(seen[r.key])return;seen[r.key]=1;var np=r.np!=null?r.np:(r.cls&&r.cls!=='paper');items.push({key:r.key,paper:r.src,q:r.q,mod:r.mod,grp:r.grp,kd:r.kd,cause:r.cause,note:r.note,qt:r.qt,np:np,aq:absQ(r.mod,r.q),ans:np?(r.ans||''):ansOf(r.src,absQ(r.mod,r.q),r)})});
  if(!items.length){toast('没有可重做的错题');return}
- SES={id:uid(),label:label,items:items,ch:{},t:{},rev:{},show:{},cur:0,qStart:Date.now(),done:false};$('practice').style.display='block';document.body.style.overflow='hidden';
+ SES={id:uid(),label:label,items:items,ch:{},t:{},rev:{},show:{},cur:0,qStart:Date.now(),done:false,ink:inkInit()};$('practice').style.display='block';document.body.style.overflow='hidden';
  clearInterval(TIMER);TIMER=setInterval(tick,1000);renderQ()}
 function curTime(i){return(SES.t[i]||0)+(i===SES.cur&&!SES.done?Date.now()-SES.qStart:0)}
 function totalTime(){var s=0;SES.items.forEach(function(x,i){s+=curTime(i)});return s}
@@ -710,19 +841,20 @@ function qBody(it,q){var h='';if(q&&q.mat)h+='<details class="mat"><summary>资�
  if(q&&q.src==='错题本')h+='<p class="mut">题目来自错题本「错题题目」列</p>';return h}
 function qLabel(it){if(it.q==null)return'';var aq=it.aq!=null?it.aq:absQ(it.mod,it.q);return' 第 '+it.q+' 题'+(aq!==it.q?'（卷内第 '+aq+' 题）':'')}
 function renderQ(){var i=SES.cur,it=SES.items[i],q=questionOf(it),n=SES.items.length;
- var h='<div class="prbar"><div><b>'+esc(SES.label)+'</b><span class="mut"> · 共 '+n+' 题</span></div><div class="prt">总用时 <b id="pr_total">'+fmt(totalTime())+'</b></div><div class="row"><button class="btn" id="pr_submit">交卷</button><button class="btn sec" id="pr_exit">退出</button></div></div>';
+ var h='<div class="prbar"><div><b>'+esc(SES.label)+'</b><span class="mut"> · 共 '+n+' 题</span></div><div class="prt">总用时 <b id="pr_total">'+fmt(totalTime())+'</b></div><div class="row"><button class="btn sec" id="pr_inkBtn" aria-pressed="false">笔记</button><button class="btn" id="pr_submit">交卷</button><button class="btn sec" id="pr_exit">退出</button></div></div>';
  h+='<div class="prwrap"><div class="prmain"><div class="row" style="justify-content:space-between"><div class="mut">第 <b class="acc">'+(i+1)+'</b> / '+n+' 题 · '+esc(it.paper||'')+qLabel(it)+' · '+modName(it.mod)+(it.grp&&it.grp!==modName(it.mod)?' · '+esc(it.grp):'')+'</div><div class="mut">本题用时 <b id="pr_qt">'+fmt(curTime(i))+'</b></div></div>';
- h+='<div style="margin:8px 0">'+markHtml(it.key)+'</div>'+qBody(it,q)+optHtml(q,it,i,'q');
+ h+='<div style="margin:8px 0">'+markHtml(it.key)+'</div><div class="prink-wrap" id="pr_inkWrap"><div class="prink-body" id="pr_inkBody">'+qBody(it,q)+optHtml(q,it,i,'q')+'</div><canvas class="prink-canvas" id="pr_ink" aria-hidden="true"></canvas></div>';
  h+='<div class="row" style="margin-top:18px"><button class="btn sec" id="pr_prev"'+(i?'':' disabled')+'>上一题</button><button class="btn sec" id="pr_reveal" title="'+(SES.show[i]?'再点一次隐藏答案':'显示正确答案和复盘笔记')+'">'+(SES.show[i]?'已显示答案':'查看答案')+'</button><button class="btn" id="pr_next">'+(i<n-1?'下一题':'交卷')+'</button></div>';
  if(SES.show[i])h+='<div class="reveal"><div>正确答案：<b class="good">'+(it.ans||'暂无答案')+'</b></div><div class="mut">考点：'+esc(it.kd)+' · 错因：'+esc(it.cause)+'</div>'+(it.note?'<div><span class="tag">你的笔记</span> '+esc(it.note)+'</div>':'')+'</div>';
  h+='<p class="mut" style="margin-top:14px;font-size:12px">快捷键：A–D 或 1–4 选择，← → 切换题目</p></div><div class="prnav"><div class="mut" style="margin-bottom:8px">答题卡</div><div class="navgrid">'+SES.items.map(function(x,j){return'<button data-nav="'+j+'" class="'+(j===i?'cur ':'')+(SES.ch[j]?'done':'')+'">'+(j+1)+'</button>'}).join('')+'</div><p class="mut" style="margin-top:12px">已答 '+Object.keys(SES.ch).length+' / '+n+'</p></div></div>';
- $('practice').innerHTML=h;
+ $('practice').innerHTML=h+inkBarHtml();
  [].forEach.call(document.querySelectorAll('#practice [data-opt]'),function(b){b.onclick=function(){SES.ch[i]=b.dataset.opt;renderQ()}});
  [].forEach.call(document.querySelectorAll('#practice [data-nav]'),function(b){b.onclick=function(){goQ(+b.dataset.nav)}});
  $('pr_prev').onclick=function(){goQ(i-1)};$('pr_next').onclick=function(){if(i<n-1)goQ(i+1);else submit()};$('pr_reveal').onclick=function(){if(SES.show[i])SES.show[i]=false;else{SES.show[i]=true;SES.rev[i]=true}renderQ()};
- $('pr_submit').onclick=submit;$('pr_exit').onclick=function(){if(confirm('退出后本次作答不会保存，确定退出？'))closePractice()}}
+ $('pr_submit').onclick=submit;$('pr_exit').onclick=function(){if(confirm('退出后本次作答不会保存，确定退出？'))closePractice()};
+ bindInk()}
 function submit(){var un=SES.items.length-Object.keys(SES.ch).length;if(un&&!confirm('还有 '+un+' 题没作答，确定交卷？'))return;
- SES.t[SES.cur]=(SES.t[SES.cur]||0)+Date.now()-SES.qStart;SES.done=true;clearInterval(TIMER);
+ SES.t[SES.cur]=(SES.t[SES.cur]||0)+Date.now()-SES.qStart;SES.done=true;clearInterval(TIMER);inkDiscard();
  var items=SES.items.map(function(it,i){return{key:it.key,paper:it.paper,q:it.q,aq:it.aq,mod:it.mod,grp:it.grp,kd:it.kd,cause:it.cause,note:it.note,qt:it.qt,np:!!it.np,ans:it.ans,ch:SES.ch[i]||'',t:SES.t[i]||0,rev:!!SES.rev[i]}});
  var graded=items.filter(function(x){return x.ans}),cor=graded.filter(function(x){return x.ch===x.ans}).length;
  var att={id:SES.id,at:new Date().toISOString(),label:SES.label,n:items.length,graded:graded.length,cor:cor,time:items.reduce(function(a,x){return a+x.t},0),items:items};
@@ -736,7 +868,7 @@ function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x
   '<div class="reveal"><div class="mut">考点：'+esc(it.kd)+' · 错因：'+esc(it.cause)+'</div>'+(it.note?'<div><span class="tag">你的笔记</span> '+esc(it.note)+'</div>':'<div class="mut">没有复盘笔记</div>')+'</div></div>'}).join('')+'</div>';
  $('practice').innerHTML=h;$('practice').scrollTop=0;$('rs_close').onclick=closePractice;
  $('rs_wrong').onclick=function(){var w=a.items.filter(function(x){return!x.ans||x.ch!==x.ans});if(!w.length){toast('本次全部正确');return}startSession(w.map(function(x){return Object.assign({src:x.paper},x)}),'再练：'+a.label)}}
-function closePractice(){clearInterval(TIMER);$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll();if(typeof flushDeferredSync==='function')flushDeferredSync()}
+function closePractice(){clearInterval(TIMER);inkDiscard();$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll();if(typeof flushDeferredSync==='function')flushDeferredSync()}
 
 // ---------- 错题重做页 ----------
 function poolRows(scope){var o=[];EBM.forEach(function(m){o=o.concat(errRows(m.k,scope==='all'?'all':'paper'))});return o}
@@ -1044,7 +1176,7 @@ function bindSync(){if(!$('s_syncGo'))return;
  $('s_syncOff').onclick=function(){lsSet(LS_TOK,'');lsSet(LS_GIST,'');lsSet(LS_CLOUD,'');lsSet(LS_DIRTY,'');if($('s_syncTok'))$('s_syncTok').value='';setSyncSt(true,'已在本机断开同步。云端私有空间还在，本机数据也还在。重新粘贴同一把钥匙即可继续同步。');renderSync()};
  if($('s_syncRestore'))$('s_syncRestore').onclick=function(){renderSnapList(true)};
  if(!bindSync._ev){bindSync._ev=1;document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')maybeAuto('resume')});window.addEventListener('focus',function(){maybeAuto('resume')});window.addEventListener('online',function(){maybeAuto('online')})}}
-window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
+window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
