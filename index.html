@@ -276,6 +276,8 @@ button,a,.opt,nav button{touch-action:manipulation}
         <label>同步钥匙（GitHub Token）<input id="s_syncTok" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 ghp_ 或 github_pat_ 开头的钥匙"></label>
       </div>
       <div class="row" style="margin-top:12px"><button class="btn" id="s_syncGo">连接并开启自动同步</button><button class="btn sec" id="s_syncNow">立即同步</button><button class="btn sec" id="s_syncOff">断开同步</button></div>
+      <div class="row" style="margin-top:8px"><button class="btn sec sm" id="s_syncRestore">恢复同步前的数据</button></div>
+      <div id="s_snapList" style="margin-top:8px"></div>
       <p id="s_syncSt" class="mut" style="margin-top:10px"></p>
     </div>
     <div class="card"><h2>备份与恢复</h2>
@@ -330,7 +332,8 @@ button,a,.opt,nav button{touch-action:manipulation}
 <li>把钥匙粘贴到「同步钥匙」框，点「连接并开启自动同步」。电脑和手机都要做一次（用同一把钥匙）。连上以后，一边刷题或改数据，另一边打开页面（或点「立即同步」）就会自动对齐。</li>
 <li>数据保存在你自己 GitHub 账号下的私有空间（Private Gist）里，公开网页和仓库不会出现你的错题本。同步钥匙只存在这台设备的这个浏览器里，不会写进普通备份，也不会写进「发给助手」的文件。</li>
 <li>「断开同步」只是忘掉这台设备上保存的钥匙，不会删除本机数据，也不会删除云端备份。重新粘贴同一把钥匙即可继续同步。</li>
-<li>请同时保留「导出备份」。同步需要联网；用文件打开（file://）也可以，只要设备能访问 GitHub。</li></ul>
+<li>请同时保留「导出备份」。同步需要联网；用文件打开（file://）也可以，只要设备能访问 GitHub。</li>
+<li>如果同步后发现本机刚做的记录不见了，到「设置 → 云端自动同步」点「恢复同步前的数据」。这里会列出同步覆盖本机前自动保存的副本（最多 3 份），恢复后再和云端合并，两边的重做记录都会保留。</li></ul>
 </div></section>
 </main>
 <div class="toast" id="toast"></div>
@@ -723,7 +726,7 @@ function submit(){var un=SES.items.length-Object.keys(SES.ch).length;if(un&&!con
  var items=SES.items.map(function(it,i){return{key:it.key,paper:it.paper,q:it.q,aq:it.aq,mod:it.mod,grp:it.grp,kd:it.kd,cause:it.cause,note:it.note,qt:it.qt,np:!!it.np,ans:it.ans,ch:SES.ch[i]||'',t:SES.t[i]||0,rev:!!SES.rev[i]}});
  var graded=items.filter(function(x){return x.ans}),cor=graded.filter(function(x){return x.ch===x.ans}).length;
  var att={id:SES.id,at:new Date().toISOString(),label:SES.label,n:items.length,graded:graded.length,cor:cor,time:items.reduce(function(a,x){return a+x.t},0),items:items};
- S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo',true);SES.att=att;renderResult()}
+ S.redo.push(att);if(S.redo.length>300)S.redo=S.redo.slice(-300);save('redo',true);SES.att=att;renderResult();if(typeof flushDeferredSync==='function')flushDeferredSync()}
 function showAttempt(id){var a=S.redo.filter(function(x){return x.id===id})[0];if(!a)return;SES={done:true,att:a,label:a.label,items:a.items};$('practice').style.display='block';document.body.style.overflow='hidden';renderResult()}
 function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x.ch}).length;var acc=a.graded?Math.round(a.cor/a.graded*1000)/10:null;
  var h='<div class="prbar"><div><b>'+esc(a.label)+'</b><span class="mut"> · '+new Date(a.at).toLocaleString('zh-CN')+'</span></div><div></div><div class="row"><button class="btn sec" id="rs_wrong">重做本次错题</button><button class="btn" id="rs_close">完成</button></div></div>';
@@ -733,7 +736,7 @@ function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x
   '<div class="reveal"><div class="mut">考点：'+esc(it.kd)+' · 错因：'+esc(it.cause)+'</div>'+(it.note?'<div><span class="tag">你的笔记</span> '+esc(it.note)+'</div>':'<div class="mut">没有复盘笔记</div>')+'</div></div>'}).join('')+'</div>';
  $('practice').innerHTML=h;$('practice').scrollTop=0;$('rs_close').onclick=closePractice;
  $('rs_wrong').onclick=function(){var w=a.items.filter(function(x){return!x.ans||x.ch!==x.ans});if(!w.length){toast('本次全部正确');return}startSession(w.map(function(x){return Object.assign({src:x.paper},x)}),'再练：'+a.label)}}
-function closePractice(){clearInterval(TIMER);$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll()}
+function closePractice(){clearInterval(TIMER);$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll();if(typeof flushDeferredSync==='function')flushDeferredSync()}
 
 // ---------- 错题重做页 ----------
 function poolRows(scope){var o=[];EBM.forEach(function(m){o=o.concat(errRows(m.k,scope==='all'?'all':'paper'))});return o}
@@ -907,7 +910,7 @@ var SYNC_TIMER=null,SYNC_ST={msg:'',ok:null,at:''},SYNC_INFLIGHT=null,SYNC_QUEUE
 var GH_FILE='xingce-growth-sync.json';
 var GH_DESC='行测成长记云端同步（私有数据，请勿公开）';
 var GH_API='https://api.github.com/gists';
-var LS_TOK=P+'gh_token',LS_GIST=P+'gh_gist_id',LS_CLOUD=P+'gh_cloud_at',LS_DIRTY=P+'gh_dirty';
+var LS_TOK=P+'gh_token',LS_GIST=P+'gh_gist_id',LS_CLOUD=P+'gh_cloud_at',LS_DIRTY=P+'gh_dirty',LS_SNAP=P+'presync_snap';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{if(v==null||v==='')localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
 function getToken(){return lsGet(LS_TOK)}
@@ -921,8 +924,26 @@ function localUpdatedAt(){return(S.meta&&(S.meta.updatedAt||S.meta.localAt))||''
 function bumpSync(fast){if(QUIET)return;S.meta=S.meta||{};S.meta.updatedAt=new Date().toISOString();S.meta.localAt=S.meta.updatedAt;try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}setDirty(true);scheduleSync(fast)}
 function scheduleSync(fast){if(!getToken())return;if(fast)SYNC_FAST=true;var ms=SYNC_FAST?300:1500;if(SYNC_TIMER)clearTimeout(SYNC_TIMER);SYNC_TIMER=setTimeout(function(){SYNC_TIMER=null;SYNC_FAST=false;syncNow({trigger:'edit'})},ms)}
 function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
-function dataScore(o){if(arguments.length===0)o=S;if(!o)return 0;if(o.data&&(o.papers==null))o=o.data;var n=(o.papers||[]).length+(o.redo||[]).length,eb=o.errbooks||o.errBooks||{};Object.keys(eb).forEach(function(m){Object.keys(eb[m]||{}).forEach(function(fn){n+=((eb[m][fn]||{}).rows||[]).length})});return n}
+function dataScore(o){if(arguments.length===0)o=S;if(!o)return 0;if(o.data&&(o.papers==null))o=o.data;var n=(o.papers||[]).length+(Array.isArray(o.redo)?o.redo.length:0),eb=o.errbooks||o.errBooks||{};Object.keys(eb).forEach(function(m){var files=eb[m]||{};Object.keys(files).forEach(function(fn){n+=((files[fn]||{}).rows||[]).length})});return n}
+function hasUserData(p){if(!p)return false;if(dataScore(p)>0)return true;if((p.papers||[]).length||(Array.isArray(p.redo)&&p.redo.length))return true;if(p.marks&&p.marks.m&&typeof p.marks.m==='object'&&Object.keys(p.marks.m).length)return true;if(p.mast&&typeof p.mast==='object'&&Object.keys(p.mast).length)return true;return false}
+function lsUserPack(){try{function rd(k,d){var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}var meta=rd('meta',{})||{};return{app:'行测成长记',version:3,updatedAt:meta.updatedAt||meta.localAt||'',settings:rd('settings',null),papers:rd('papers',[]),errbooks:rd('errbooks',{}),ans:rd('ans',{}),redo:rd('redo',[]),marks:rd('marks',null),mast:rd('mast',{}),meta:{lastBackup:meta.lastBackup||''}}}catch(e){return null}}
+function combineLocal(a,b){if(!hasUserData(a))return b||a;if(!hasUserData(b))return a||b;return mergePack(a,b)}
+function captureLocal(startPack){return combineLocal(combineLocal(startPack,syncPack()),lsUserPack())}
 function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
+var SYNC_DEFER=false;
+function sessionBlocksPull(){return !!(SES&&!SES.done)}
+function loadSnaps(){try{var v=JSON.parse(lsGet(LS_SNAP)||'[]');return Array.isArray(v)?v.filter(function(x){return x&&x.pack&&typeof x.pack==='object'}):[]}catch(e){return []}}
+function savePresyncSnap(reason){if(!hasUserData(syncPack()))return;var item={at:new Date().toISOString(),reason:String(reason||'sync'),papers:(S.papers||[]).length,redo:(S.redo||[]).length,pack:syncPack()};var list=loadSnaps();list.unshift(item);if(list.length>3)list=list.slice(0,3);while(list.length){try{localStorage.setItem(LS_SNAP,JSON.stringify(list));return}catch(e){list.pop()}}}
+function safeApplyPack(d,reason){if(sessionBlocksPull())return{deferred:true};savePresyncSnap(reason);applyPack(d);return{deferred:false}}
+function flushDeferredSync(){if(!SYNC_DEFER||!getToken())return;SYNC_DEFER=false;syncNow({trigger:'practice-end'})}
+function snapSummary(x){var pack=x&&x.pack||{},pn=(x&&x.papers!=null)?x.papers:(pack.papers||[]).length,rn=(x&&x.redo!=null)?x.redo:(pack.redo||[]).length,t=x&&x.at?new Date(x.at).toLocaleString('zh-CN'):'';return(t||'未知时间')+' · 套卷 '+pn+' · 重做 '+rn+' 条'}
+function renderSnapList(open){var el=$('s_snapList');if(!el)return;if(!open){if(!el.dataset.keep)el.innerHTML='';return}var list=loadSnaps();if(!list.length){el.innerHTML='<p class="mut">没有可恢复的同步前数据。只有在同步即将覆盖本机数据时才会自动保存（最多 3 份）。</p>';return}
+ el.innerHTML='<p class="mut">同步覆盖前自动保存的本机副本（最多 3 份）：</p>'+list.map(function(x,i){return'<div class="row" style="margin-top:6px;justify-content:space-between;align-items:center;gap:8px"><span>'+esc(snapSummary(x))+'</span><button class="btn sec sm" data-snap="'+i+'">用这份恢复</button></div>'}).join('');
+ [].forEach.call(el.querySelectorAll('[data-snap]'),function(b){b.onclick=function(){restoreSnap(+b.dataset.snap)}})}
+function restoreSnap(i){var list=loadSnaps(),item=list[i];if(!item||!item.pack){toast('没有找到这份副本');return}
+ if(!confirm('用这份同步前的数据恢复本机？\n'+snapSummary(item)+'\n恢复后会再和云端合并，两边的重做记录都会保留。'))return;
+ applyPack(item.pack);S.meta=S.meta||{};S.meta.updatedAt=new Date().toISOString();S.meta.localAt=S.meta.updatedAt;try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}
+ setDirty(true);setCloudAt('');renderAll();toast('已恢复同步前的数据，正在与云端合并…');setSyncSt(null,'正在同步…');syncNow({trigger:'restore'}).then(function(){renderAll();renderSnapList(true)})}
 function parseWhen(s){if(s==null||s==='')return 0;if(typeof s==='number'&&isFinite(s))return s;var t=Date.parse(s);if(!isNaN(t))return t;var m=String(s).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2}))?)?/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4]||0,+m[5]||0,+m[6]||0).getTime():0}
 function fileAt(f){return f?(f.importedMs||parseWhen(f.importedAt)||0):0}
 function isoMax(a,b){return(!a||(b&&b>a))?b:a}
@@ -987,25 +1008,26 @@ function okMsg(kind,stamp){var t=fmtSyncTime(stamp||new Date().toISOString());
 function finishOk(kind,stamp,redraw){setDirty(false);setCloudAt(stamp||'');setSyncSt(true,okMsg(kind,stamp));if(redraw)renderAll();return{ok:true,kind:kind,stamp:stamp}}
 function syncNow(opts){opts=opts||{};if(!getToken())return Promise.resolve({ok:false,reason:'no-token'});
  if(SYNC_INFLIGHT){SYNC_QUEUED=true;return SYNC_INFLIGHT}
- var run=function(){var localPack=syncPack();
-  return loadCloud().then(function(cloud){var pack=cloud.pack,stamp=cloud.stamp||(pack&&pack.updatedAt)||'',last=getCloudAt(),dirty=isDirty(),localN=dataScore(S),cloudN=dataScore(pack),cloudChanged=!!(stamp&&last&&stamp!==last),sameAt=!!(pack&&pack.updatedAt&&pack.updatedAt===localUpdatedAt());
-   // A: empty local, cloud has data
-   if(localN===0&&cloudN>0){applyPack(pack);return finishOk('down',stamp||pack.updatedAt,true)}
+ var run=function(){var startPack=syncPack();
+  return loadCloud().then(function(cloud){var local=captureLocal(startPack),pack=cloud.pack,stamp=cloud.stamp||(pack&&pack.updatedAt)||'',last=getCloudAt(),dirty=isDirty(),localAny=hasUserData(local),localN=dataScore(local),cloudN=dataScore(pack),sameAt=!!(pack&&pack.updatedAt&&pack.updatedAt===((local&&local.updatedAt)||localUpdatedAt()));
+   function deferPull(){SYNC_DEFER=true;setSyncSt(null,'正在做题，交卷或退出后再自动同步。');return{ok:true,kind:'deferred'}}
+   function applyCloud(d,reason){if(sessionBlocksPull())return deferPull();var r=safeApplyPack(d,reason);if(r.deferred)return deferPull();return null}
+   function mergeAndPush(reason){if(sessionBlocksPull())return deferPull();var merged=mergePack(local,pack||{});var d=applyCloud(merged,reason);if(d)return d;setDirty(true);return pushPack(merged,cloud.gist).then(function(g){var st=merged.updatedAt||(g&&g.updated_at)||'';return finishOk('merge',st,true)}).catch(function(e){setDirty(true);throw e})}
+   // A: truly empty local, cloud has data
+   if(!localAny&&cloudN>0){var dA=applyCloud(pack,'pull');if(dA)return dA;return finishOk('down',stamp||pack.updatedAt,true)}
    // B: empty cloud, local has data
-   if(cloudN===0&&localN>0){return pushPack(localPack,cloud.gist).then(function(g){var st=(localPack.updatedAt)||(g&&g.updated_at)||'';return finishOk('up',st,false)})}
+   if(cloudN===0&&localAny){setDirty(true);return pushPack(local,cloud.gist).then(function(g){var st=(local.updatedAt)||(g&&g.updated_at)||'';return finishOk('up',st,false)}).catch(function(e){setDirty(true);throw e})}
    // both empty
-   if(localN===0&&cloudN===0){setDirty(false);if(stamp)setCloudAt(stamp);setSyncSt(true,'已开启云端自动同步，还没有需要同步的数据。');return{ok:true,kind:'empty'}}
-   // first connect: both sides have data → always merge (never silently drop either side)
-   var bothFresh=!last&&localN>0&&cloudN>0;
-   if(bothFresh){var merged0=mergePack(localPack,pack||{});applyPack(merged0);return pushPack(merged0,cloud.gist).then(function(g){var st=merged0.updatedAt||(g&&g.updated_at)||'';return finishOk('merge',st,true)})}
-   // C: local not dirty
-   if(!dirty){if(stamp&&stamp!==last&&pack&&!sameAt){applyPack(pack);return finishOk('down',stamp||pack.updatedAt,true)}setSyncSt(true,okMsg('same',stamp||localUpdatedAt()||last));if(stamp)setCloudAt(stamp);return{ok:true,kind:'same'}}
+   if(!localAny&&cloudN===0){setDirty(false);if(stamp)setCloudAt(stamp);setSyncSt(true,'已开启云端自动同步，还没有需要同步的数据。');return{ok:true,kind:'empty'}}
+   // first connect: any local user data (redo / papers / errbooks / marks / mast) always merges and pushes
+   if(!last&&localAny&&cloudN>0)return mergeAndPush('merge');
+   // C: local not dirty — never blind-pull on a first connect (empty lastCloudAt)
+   if(!dirty){if(last&&stamp&&stamp!==last&&pack&&!sameAt){var dC=applyCloud(pack,'pull');if(dC)return dC;return finishOk('down',stamp||pack.updatedAt,true)}setSyncSt(true,okMsg('same',stamp||(local&&local.updatedAt)||localUpdatedAt()||last));if(stamp)setCloudAt(stamp);return{ok:true,kind:'same'}}
    // D: dirty and cloud unchanged (or first push)
-   var canPush=(last&&stamp===last)||(!last&&(!pack||(localPack.updatedAt||'')>=(pack.updatedAt||'')));
-   if(canPush){return pushPack(localPack,cloud.gist).then(function(g){var st=localPack.updatedAt||(g&&g.updated_at)||'';return finishOk('up',st,false)})}
+   var canPush=(last&&stamp===last)||(!last&&(!pack||(local.updatedAt||'')>=(pack.updatedAt||'')));
+   if(canPush){return pushPack(local,cloud.gist).then(function(g){var st=local.updatedAt||(g&&g.updated_at)||'';return finishOk('up',st,false)}).catch(function(e){setDirty(true);throw e})}
    // E: dirty and cloud changed since lastCloudAt
-   var merged=mergePack(localPack,pack||{});applyPack(merged);
-   return pushPack(merged,cloud.gist).then(function(g){var st=merged.updatedAt||(g&&g.updated_at)||'';return finishOk('merge',st,true)})}).catch(function(e){var net=!(e&&e.status);var msg=classifyGhErr(e,net);setSyncSt(false,msg);return{ok:false,err:msg,status:e&&e.status}})};
+   return mergeAndPush('merge')}).catch(function(e){var net=!(e&&e.status);var msg=classifyGhErr(e,net);setSyncSt(false,msg);return{ok:false,err:msg,status:e&&e.status}})};
  SYNC_INFLIGHT=Promise.resolve().then(run).then(function(r){SYNC_INFLIGHT=null;if(SYNC_QUEUED){SYNC_QUEUED=false;return syncNow({trigger:'queued'}).then(function(){return r})}return r},function(e){SYNC_INFLIGHT=null;throw e});
  return SYNC_INFLIGHT}
 function maybeAuto(trigger){if(!getToken())return;var now=Date.now();
@@ -1020,8 +1042,9 @@ function bindSync(){if(!$('s_syncGo'))return;
   setSyncSt(null,'正在同步…');syncNow({trigger:'connect'}).then(function(){renderAll()})};
  $('s_syncNow').onclick=function(){var inp=$('s_syncTok'),tok=((inp&&inp.value)||'').trim();if(tok){if(looksLikeToken(tok)){lsSet(LS_TOK,tok);if(inp)inp.value=''}}if(!getToken()){setSyncSt(false,'请先粘贴同步钥匙并点「连接并开启自动同步」。');return}setSyncSt(null,'正在同步…');syncNow({trigger:'manual'})};
  $('s_syncOff').onclick=function(){lsSet(LS_TOK,'');lsSet(LS_GIST,'');lsSet(LS_CLOUD,'');lsSet(LS_DIRTY,'');if($('s_syncTok'))$('s_syncTok').value='';setSyncSt(true,'已在本机断开同步。云端私有空间还在，本机数据也还在。重新粘贴同一把钥匙即可继续同步。');renderSync()};
+ if($('s_syncRestore'))$('s_syncRestore').onclick=function(){renderSnapList(true)};
  if(!bindSync._ev){bindSync._ev=1;document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')maybeAuto('resume')});window.addEventListener('focus',function(){maybeAuto('resume')});window.addEventListener('online',function(){maybeAuto('online')})}}
-window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()}};
+window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
