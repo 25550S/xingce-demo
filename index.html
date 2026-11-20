@@ -129,7 +129,8 @@ button,a,.opt,nav button{touch-action:manipulation}
   .row{flex-wrap:wrap}
   .banner.strong{flex-wrap:wrap}
   .prbar{display:flex;flex-wrap:wrap;padding:10px 12px;height:auto;gap:8px 12px;padding-top:max(10px,env(safe-area-inset-top))}
-  .prbar>.row{justify-content:flex-start}
+  .prbar>.row{justify-content:flex-start;flex-wrap:wrap;gap:6px;width:100%;min-width:0}
+  .prbar>.row .btn{padding:6px 8px;font-size:12.5px;min-height:36px;white-space:nowrap}
   .prwrap{padding:12px}
   .prmain{padding:16px}
   .navgrid{grid-template-columns:repeat(6,1fr);gap:8px}
@@ -208,6 +209,19 @@ button,a,.opt,nav button{touch-action:manipulation}
 .qfig-zs{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:48px 12px 24px;box-sizing:border-box;text-align:center}
 .qfig-zs img{display:inline-block;max-width:none;height:auto;background:#fff;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
 .qfig-zx{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:61;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:20px;line-height:1;cursor:pointer;color:var(--txt)}
+
+.qedit-mask{display:none;position:fixed;inset:0;z-index:50;background:rgba(20,20,30,.28)}
+.qedit-mask.open{display:block}
+.qedit-pop{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(480px,calc(100vw - 24px));max-height:min(86vh,640px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(20,20,30,.14);padding:16px 16px 18px;box-sizing:border-box}
+.qedit-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.qedit-ttl{font-weight:600;flex:1}
+.qedit-pop label{display:block;font-size:12px;color:var(--mut);margin:8px 0 4px}
+.qedit-pop textarea,.qedit-pop input{width:100%;box-sizing:border-box}
+.qedit-pop textarea{min-height:110px;resize:vertical;line-height:1.6}
+.qedit-acts{margin-top:14px;justify-content:flex-end}
+@media(max-width:720px){
+  .qedit-pop{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:min(86vh,680px);border-radius:14px 14px 0 0;padding:14px 16px max(16px,env(safe-area-inset-bottom))}
+}
 </style></head><body>
 <header>
   <h1>行测<span>成长记</span></h1>
@@ -446,7 +460,8 @@ function figHydrate(root){root=root||document;[].forEach.call(root.querySelector
  if(FIG_MEM[p])put(FIG_MEM[p]);else figLoad(p).then(put,fail)})}
 // 题目区：有截图时显示截图（截图已含题干和选项），文字放进「文字版」；加载失败退回原来的文字和「本题含图」提示
 function figQHtml(it,q,fi,textHtml){if(!fi||!fi.q)return textHtml;
- return'<div class="qfigw">'+figBox(fi.p,'q',fi.n,fi.q)+'<div class="qfig-alt">'+textHtml+'</div>'+(q&&q.s?'<details class="qfig-txt"><summary>文字版题干</summary><div class="pre">'+figEsc(q.s)+'</div></details>':'')+'</div>'}
+ var extra=q&&q.ed&&q.s?'<div class="stem pre">'+figEsc(q.s)+'</div>':(q&&q.s?'<details class="qfig-txt"><summary>文字版题干</summary><div class="pre">'+figEsc(q.s)+'</div></details>':'');
+ return'<div class="qfigw">'+figBox(fi.p,'q',fi.n,fi.q)+'<div class="qfig-alt">'+textHtml+'</div>'+extra+'</div>'}
 function figMatHtml(it,q,fi){if(!fi||!fi.m)return null;var txt=q&&q.mat?'<div class="qfig-alt"><div class="pre">'+figEsc(q.mat)+'</div></div>':'<div class="qfig-alt mut">资料图暂时没加载出来，请看原卷。</div>';
  return'<details class="mat matimg qfigw"><summary>资料（原题图，点击展开）</summary>'+figBox(fi.p,'m',fi.mk,fi.m,'mfig')+txt+'</details>'}
 (function(){function obs(){var pr=document.getElementById('practice');if(!pr||!window.MutationObserver)return;new MutationObserver(function(){figHydrate(pr)}).observe(pr,{childList:true,subtree:true})}
@@ -477,7 +492,7 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function load(k,d){try{var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}catch(e){return d}}
 var QUIET=false;
 function save(k,fast){localStorage.setItem(P+k,JSON.stringify(S[k]));if(!QUIET&&k!=='meta'&&typeof bumpSync==='function')bumpSync(!!fast)}
-function saveAll(){['settings','papers','errbooks','meta','ans','redo','marks','mast'].forEach(save)}
+function saveAll(){['settings','papers','errbooks','meta','ans','redo','marks','mast','qedit'].forEach(save)}
 function normMarks(m){m=m&&typeof m==='object'?m:{};return{tags:Array.isArray(m.tags)&&m.tags.length?m.tags:['易混','再看'],m:m.m&&typeof m.m==='object'?m.m:{}}}
 function normSettings(o){o=o&&typeof o==='object'?o:{};var s=Object.assign({},DEF_RULE);['recentN','threshold','perError','maxDeduct','zx','alias','rangeCheck','exclM'].forEach(function(k){if(o[k]!=null&&o[k]!=='')s[k]=o[k]});
  if(o.maxDeduct===15&&!o.v2)s.maxDeduct=10;
@@ -486,8 +501,9 @@ function normSettings(o){o=o&&typeof o==='object'?o:{};var s=Object.assign({},DE
 function normPapers(ps){if(!Array.isArray(ps))return[];return ps.filter(function(p){return p&&typeof p==='object'}).map(function(p){var q={id:p.id||uid(),name:String(p.name||'未命名'),date:p.date||'',note:p.note||'',file:p.file||'',mods:{}};
  MODS.forEach(function(m){var v=p.mods&&p.mods[m.k];if(v){q.mods[m.k]={t:+v.t||0,s:v.s!=null?+v.s:DEF_LAYOUT[m.k].s,man:v.man!=null?+v.man:(v.c!=null?+v.c:null)}}else if(!p.mods||!Object.keys(p.mods).some(function(k){return p.mods[k]&&p.mods[k].c!=null})){q.mods[m.k]={t:0,s:DEF_LAYOUT[m.k].s,man:null}}else q.mods[m.k]={t:0,s:DEF_LAYOUT[m.k].s,man:null}});return q})}
 function normEb(e){var o={};EBM.forEach(function(m){o[m.k]=(e&&e[m.k]&&typeof e[m.k]==='object')?e[m.k]:{}});return o}
-function init(){QUIET=true;S.settings=normSettings(load('settings',{}));S.papers=normPapers(load('papers',[]));S.errbooks=normEb(load('errbooks',{}));S.meta=load('meta',{})||{};S.ans=load('ans',{})||{};S.redo=load('redo',[]);if(!Array.isArray(S.redo))S.redo=[];S.marks=normMarks(load('marks',null));S.mast=normObj(load('mast',{}));saveAll();QUIET=false}
+function init(){QUIET=true;S.settings=normSettings(load('settings',{}));S.papers=normPapers(load('papers',[]));S.errbooks=normEb(load('errbooks',{}));S.meta=load('meta',{})||{};S.ans=load('ans',{})||{};S.redo=load('redo',[]);if(!Array.isArray(S.redo))S.redo=[];S.marks=normMarks(load('marks',null));S.mast=normObj(load('mast',{}));S.qedit=normQedit(load('qedit',{}));saveAll();QUIET=false}
 function normObj(o){return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}
+function normQedit(m){var o={},k;m=m&&typeof m==='object'&&!Array.isArray(m)?m:{};for(k in m){if(!Object.prototype.hasOwnProperty.call(m,k))continue;var v=m[k];if(!v||typeof v!=='object')continue;var opts=Array.isArray(v.o)?v.o.slice(0,4):['','','',''];while(opts.length<4)opts.push('');o[k]={s:v.s!=null?String(v.s):'',o:opts.map(function(x){return x==null?'':String(x)}),at:v.at||''}}return o}
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function pad(n){return(n<10?'0':'')+n}
@@ -723,7 +739,7 @@ function renderFormulaHelp(){var s=S.settings;$('formulaHelp').innerHTML=
  '<li><b>五维基础分</b>（政治理论、数量关系、逻辑判断、资料分析、言语理解）= 最近 '+s.recentN+' 套含该模块的套卷正确率加权平均 × 100。最新一套权重 '+s.recentN+'，往前依次减 1。</li>'+
  '<li><b>错题扣分</b>（政治理论不扣）：只看这几套卷里、来源属于套卷的错题。同一考点错 ≥'+s.threshold+' 道，扣 '+s.perError+' ×（错题数 − '+s.threshold+' + 1）分；所有考点合计最多扣 '+s.maxDeduct+' 分。'+(s.exclM!==false?'已掌握的错题（连续 2 次重做做对且没看答案，或手动标记）不计入扣分。':'已掌握的错题也照常计入扣分。')+'最终分 = 基础分 − 错题扣分，不低于 0。</li>'+
  '<li>专项练习（如片段刷题、600题）的错题只在错题统计里显示，不影响分数。没有数据时显示「暂无数据」。</li>'}
-function doExport(){var data={app:'行测成长记',version:3,exportedAt:new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast};
+function doExport(){var data={app:'行测成长记',version:3,exportedAt:new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit};
  var blob=new Blob([JSON.stringify(data)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='行测成长记备份_'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);
  S.meta.lastBackup=today();save('meta');renderAll();toast('已下载「行测成长记备份_'+today()+'.json」，请拖进 OneDrive')}
 function bindSettings(){$('s_save').onclick=function(){var s=S.settings;[['recentN',1,30],['threshold',1,50],['perError',0,20],['maxDeduct',0,100],['tipDays',1,365]].forEach(function(x){var v=num($('s_'+x[0]).value);if(v==null)v=x[0]==='tipDays'?30:DEF_RULE[x[0]];s[x[0]]=Math.max(x[1],Math.min(x[2],v))});
@@ -737,7 +753,7 @@ function bindSettings(){$('s_save').onclick=function(){var s=S.settings;[['recen
  $('s_export').onclick=function(){doExport()};
  $('s_import').onclick=function(){$('s_importFile').click()};
  $('s_importFile').onchange=function(){var f=$('s_importFile').files[0];if(!f)return;f.text().then(function(t){var d=JSON.parse(t);if(d.app!=='行测成长记')throw new Error('不是行测成长记的备份文件');if(!confirm('导入会覆盖当前所有数据，确定吗？'))return;
-  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);saveAll();if(typeof bumpSync==='function')bumpSync(true);renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
+  S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks);S.ans=d.ans||{};S.redo=d.redo||[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);saveAll();if(typeof bumpSync==='function')bumpSync(true);renderAll();toast('导入成功')}).catch(function(e){alert('导入失败：'+e.message)});$('s_importFile').value=''};
  $('s_clear').onclick=function(){if(!confirm('确定清空全部数据？建议先导出备份。'))return;if(prompt('请输入「清空」两个字确认')!=='清空')return;var tok=null,gid=null;try{tok=localStorage.getItem(P+'gh_token');gid=localStorage.getItem(P+'gh_gist_id')}catch(e){}Object.keys(localStorage).forEach(function(k){if(k.indexOf(P)===0)localStorage.removeItem(k)});try{if(tok)localStorage.setItem(P+'gh_token',tok);if(gid)localStorage.setItem(P+'gh_gist_id',gid)}catch(e){}SYNC_ST={msg:'',ok:null,at:''};qbClear();init();detailId=null;editing=null;renderPaperForm(null);renderAll();toast(tok?'已清空本机数据。云端备份还在，点「立即同步」可以拉回来。':'已清空')}}
 
 // ---------- 题库（IndexedDB）与答案 ----------
@@ -769,7 +785,9 @@ function absQ(mod,q){return q}
 function ansOf(paper,q,row){if(!paper||q==null)return row&&row.ans||'';var a=S.ans[paper]&&S.ans[paper][q];if(a)return a;var e=EMB_ANS[paper];if(e&&e.charAt(q-1)&&e.charAt(q-1)!=='-')return e.charAt(q-1);return row&&row.ans||''}
 function parseQt(t){if(!t)return null;var lines=String(t).split(/\r?\n/);var o={},s=[],last=null;lines.forEach(function(l){var m=l.match(/^\s*([A-D])\s*[.．、]\s*(.*)$/);if(m){o[m[1]]=m[2];last=m[1]}else if(l.trim()){if(last)o[last]+=l.trim();else s.push(l)}});
  var st=s.join('\n').replace(/^\s*\d+\s*[.．、]\s*/,'').trim();return{s:st,o:['A','B','C','D'].map(function(k){return o[k]||''}),f:/含图|见图/.test(t)?'（本题含图，请看原卷）':'',src:'错题本'}}
-function questionOf(it){if(it.np)return parseQt(it.qt);var b=QB[it.paper];var aq=it.aq!=null?it.aq:absQ(it.mod,it.q);if(b&&aq!=null&&b.qs[aq]){var x=b.qs[aq];return{s:x.s,o:x.o,f:x.f,mat:x.mi>=0?b.mats[x.mi]:'',src:'题库'}}return parseQt(it.qt)}
+function qeditKey(it){if(!it)return'';if(it.np)return it.key||'';var aq=it.aq!=null?it.aq:absQ(it.mod,it.q);var p=it.paper||it.src||'';return p&&aq!=null?p+'#'+aq:(it.key||'')}
+function applyQedit(it,q){var k=qeditKey(it),ed=k&&S.qedit&&S.qedit[k];if(!ed)return q;q=q?{s:q.s,o:(q.o||['','','','']).slice(),f:q.f||'',mat:q.mat||'',src:q.src}: {s:'',o:['','','',''],f:'',src:''};if(ed.s!=null)q.s=ed.s;if(Array.isArray(ed.o))q.o=['A','B','C','D'].map(function(_,i){return ed.o[i]!=null?String(ed.o[i]):''});q.ed=true;return q}
+function questionOf(it){var q;if(it.np)q=parseQt(it.qt);else{var b=QB[it.paper];var aq=it.aq!=null?it.aq:absQ(it.mod,it.q);if(b&&aq!=null&&b.qs[aq]){var x=b.qs[aq];q={s:x.s,o:x.o,f:x.f,mat:x.mi>=0?b.mats[x.mi]:'',src:'题库'}}else q=parseQt(it.qt)}return applyQedit(it,q)}
 function importTxt(fileList){var files=[].slice.call(fileList).filter(function(f){return/\.txt$/i.test(f.name)});if(!files.length){toast('没有找到 txt 文件');return Promise.resolve()}
  var msgs=[];$('q_msg').textContent='正在读取 '+files.length+' 个文件…';
  return Promise.all(files.map(function(f){return f.text().then(function(t){var a=parseAnsTxt(t);if(a.n>=10){Object.keys(a.map).forEach(function(p){S.ans[p]=Object.assign(S.ans[p]||{},a.map[p])});save('ans');msgs.push('✓ '+f.name+'：答案 '+a.n+' 条（'+Object.keys(a.map).length+' 套）');return}
@@ -927,7 +945,7 @@ function optHtml(q,it,i,mode){var L=['A','B','C','D'];var ch=mode==='res'?it.ch:
   return'<button class="'+cls+'" data-opt="'+k+'"'+(mode==='res'?' disabled':'')+'><b>'+k+'</b><span>'+(txt?esc(txt):fh?'':'<span class="mut">选项 '+k+'</span>')+'</span>'+(mode==='res'&&k===ch?'<em>你的选择</em>':'')+(mode==='res'&&k===it.ans?'<em>正确答案</em>':'')+'</button>'}).join('')+'</div>'}
 function qBody(it,q){var h='',fi=typeof figInfo==='function'?figInfo(it):null,mh=fi?figMatHtml(it,q,fi):null;if(mh)h+=mh;else if(q&&q.mat)h+='<details class="mat"><summary>资料（点击展开）</summary><div class="pre">'+esc(q.mat)+'</div></details>';
  var t='';if(q&&q.f)t+='<div class="fig">'+esc(q.f)+'</div>';
- t+=q&&q.s?'<div class="stem pre">'+esc(q.s)+'</div>':'<div class="stem mut">题目未导入（'+esc(it.paper||'')+' 第 '+(it.q!=null?it.q:'?')+' 题）。请对照原卷作答，或在「错题重做」页导入题库 txt。</div>';
+ t+=q&&q.s?'<div class="stem pre">'+esc(q.s)+'</div>':(q&&q.ed?'':'<div class="stem mut">题目未导入（'+esc(it.paper||'')+' 第 '+(it.q!=null?it.q:'?')+' 题）。请对照原卷作答，或在「错题重做」页导入题库 txt。</div>');
  h+=fi?figQHtml(it,q,fi,t):t;
  if(q&&q.src==='错题本')h+='<p class="mut">题目来自错题本「错题题目」列</p>';return h}
 function qLabel(it){if(it.q==null)return'';var aq=it.aq!=null?it.aq:absQ(it.mod,it.q);return' 第 '+it.q+' 题'+(aq!==it.q?'（卷内第 '+aq+' 题）':'')}
@@ -939,8 +957,14 @@ function cardOpen(){var m=$('pr_cardMask');if(!m)return;m.classList.add('open');
 function cardClose(){var m=$('pr_cardMask');if(!m)return;m.classList.remove('open');if($('pr_cardBtn'))$('pr_cardBtn').setAttribute('aria-expanded','false')}
 function cardToggle(){if(cardIsOpen())cardClose();else cardOpen()}
 function bindCard(){if($('pr_cardBtn'))$('pr_cardBtn').onclick=function(e){e.stopPropagation();cardToggle()};if($('pr_cardClose'))$('pr_cardClose').onclick=function(e){e.stopPropagation();cardClose()};if($('pr_cardMask'))$('pr_cardMask').onclick=function(e){if(e.target===$('pr_cardMask'))cardClose()};if($('pr_cardPop'))$('pr_cardPop').onclick=function(e){e.stopPropagation()}}
+function qeditIsOpen(){var m=$('pr_qeditMask');return!!(m&&m.classList.contains('open'))}
+function qeditClose(){var m=$('pr_qeditMask');if(!m)return;m.classList.remove('open')}
+function qeditEnsure(){var m=$('pr_qeditMask');if(m)return m;m=document.createElement('div');m.id='pr_qeditMask';m.className='qedit-mask';m.innerHTML='<div class="qedit-pop" id="pr_qeditPop" role="dialog" aria-label="补全题" aria-modal="true"><div class="qedit-hd"><div class="qedit-ttl">补全题</div><button type="button" class="prcard-x" id="pr_qeditX" aria-label="取消">×</button></div><label for="qe_s">题干</label><textarea id="qe_s" rows="6"></textarea><label for="qe_oA">A</label><input id="qe_oA" type="text" autocomplete="off"><label for="qe_oB">B</label><input id="qe_oB" type="text" autocomplete="off"><label for="qe_oC">C</label><input id="qe_oC" type="text" autocomplete="off"><label for="qe_oD">D</label><input id="qe_oD" type="text" autocomplete="off"><div class="row qedit-acts"><button type="button" class="btn" id="qe_save">保存</button><button type="button" class="btn sec" id="qe_cancel">取消</button></div></div>';
+ document.body.appendChild(m);m.onclick=function(e){if(e.target===m)qeditClose()};$('pr_qeditPop').onclick=function(e){e.stopPropagation()};$('pr_qeditX').onclick=qeditClose;$('qe_cancel').onclick=qeditClose;$('qe_save').onclick=qeditSave;return m}
+function qeditOpen(){if(!SES||SES.done)return;var it=SES.items[SES.cur],q=questionOf(it)||{s:'',o:['','','','']},m=qeditEnsure();$('qe_s').value=q.s||'';['A','B','C','D'].forEach(function(L,j){$('qe_o'+L).value=(q.o&&q.o[j])||''});m.classList.add('open');setTimeout(function(){if($('qe_s'))$('qe_s').focus()},0)}
+function qeditSave(){if(!SES||SES.done)return;var it=SES.items[SES.cur],s=$('qe_s')?$('qe_s').value:'',o=['A','B','C','D'].map(function(L){return $('qe_o'+L)?$('qe_o'+L).value:''});S.qedit=S.qedit||{};S.qedit[qeditKey(it)]={s:s,o:o,at:new Date().toISOString()};save('qedit');qeditClose();renderQ()}
 function renderQ(){var i=SES.cur,it=SES.items[i],q=questionOf(it),n=SES.items.length;
- var h='<div class="prbar"><div><b>'+esc(SES.label)+'</b><span class="mut"> · 共 '+n+' 题</span></div><div class="prt">总用时 <b id="pr_total">'+fmt(totalTime())+'</b></div><div class="row"><button type="button" class="btn sec sm prcard-btn" id="pr_cardBtn" aria-expanded="false" aria-haspopup="dialog" aria-controls="pr_cardPop">'+cardIcon()+'答题卡 <span class="prcard-prog">'+(i+1)+'/'+n+'</span></button><button class="btn" id="pr_submit">交卷</button><button class="btn sec" id="pr_exit">退出</button></div></div>';
+ var h='<div class="prbar"><div><b>'+esc(SES.label)+'</b><span class="mut"> · 共 '+n+' 题</span></div><div class="prt">总用时 <b id="pr_total">'+fmt(totalTime())+'</b></div><div class="row"><button type="button" class="btn sec sm prcard-btn" id="pr_cardBtn" aria-expanded="false" aria-haspopup="dialog" aria-controls="pr_cardPop">'+cardIcon()+'答题卡 <span class="prcard-prog">'+(i+1)+'/'+n+'</span></button><button type="button" class="btn sec sm" id="pr_qedit">补全题</button><button class="btn" id="pr_submit">交卷</button><button class="btn sec" id="pr_exit">退出</button></div></div>';
  h+='<div class="prwrap"><div class="prmain"><div class="row" style="justify-content:space-between"><div class="mut">第 <b class="acc">'+(i+1)+'</b> / '+n+' 题 · '+esc(it.paper||'')+qLabel(it)+' · '+modName(it.mod)+(it.grp&&it.grp!==modName(it.mod)?' · '+esc(it.grp):'')+'</div><div class="mut">本题用时 <b id="pr_qt">'+fmt(curTime(i))+'</b></div></div>';
  h+='<div style="margin:8px 0">'+markHtml(it.key)+'</div><div class="prink-wrap" id="pr_inkWrap"><div class="prink-body" id="pr_inkBody">'+qBody(it,q)+optHtml(q,it,i,'q')+'</div><canvas class="prink-canvas" id="pr_ink" aria-hidden="true"></canvas></div>';
  h+='<div class="row practs"><button class="btn sec" id="pr_prev"'+(i?'':' disabled')+'>上一题</button><button class="btn sec" id="pr_reveal" title="'+(SES.show[i]?'再点一次隐藏答案':'显示正确答案和复盘笔记')+'">'+(SES.show[i]?'已显示答案':'查看答案')+'</button><button type="button" class="btn sec" id="pr_inkBtn" aria-pressed="false">笔记</button><button class="btn" id="pr_next">'+(i<n-1?'下一题':'交卷')+'</button></div>';
@@ -951,7 +975,7 @@ function renderQ(){var i=SES.cur,it=SES.items[i],q=questionOf(it),n=SES.items.le
  [].forEach.call(document.querySelectorAll('#practice [data-nav]'),function(b){b.onclick=function(){goQ(+b.dataset.nav)}});
  bindCard();
  $('pr_prev').onclick=function(){goQ(i-1)};$('pr_next').onclick=function(){if(i<n-1)goQ(i+1);else submit()};$('pr_reveal').onclick=function(){if(SES.show[i])SES.show[i]=false;else{SES.show[i]=true;SES.rev[i]=true}renderQ()};
- $('pr_submit').onclick=submit;$('pr_exit').onclick=function(){if(confirm('退出后本次作答不会保存，确定退出？'))closePractice()};
+ if($('pr_qedit'))$('pr_qedit').onclick=qeditOpen;$('pr_submit').onclick=submit;$('pr_exit').onclick=function(){if(confirm('退出后本次作答不会保存，确定退出？'))closePractice()};
  bindInk()}
 function submit(){var un=SES.items.length-Object.keys(SES.ch).length;if(un&&!confirm('还有 '+un+' 题没作答，确定交卷？'))return;
  SES.t[SES.cur]=(SES.t[SES.cur]||0)+Date.now()-SES.qStart;SES.done=true;clearInterval(TIMER);inkDiscard();
@@ -968,7 +992,7 @@ function renderResult(){var a=SES.att;var un=a.items.filter(function(x){return!x
   '<div class="reveal"><div class="mut">考点：'+esc(it.kd)+' · 错因：'+esc(it.cause)+'</div>'+(it.note?'<div><span class="tag">你的笔记</span> '+esc(it.note)+'</div>':'<div class="mut">没有复盘笔记</div>')+'</div></div>'}).join('')+'</div>';
  $('practice').innerHTML=h;$('practice').scrollTop=0;$('rs_close').onclick=closePractice;
  $('rs_wrong').onclick=function(){var w=a.items.filter(function(x){return!x.ans||x.ch!==x.ans});if(!w.length){toast('本次全部正确');return}startSession(w.map(function(x){return Object.assign({src:x.paper},x)}),'再练：'+a.label)}}
-function closePractice(){clearInterval(TIMER);inkDiscard();$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll();if(typeof flushDeferredSync==='function')flushDeferredSync()}
+function closePractice(){clearInterval(TIMER);inkDiscard();if(typeof qeditClose==='function')qeditClose();$('practice').style.display='none';document.body.style.overflow='';SES=null;renderAll();if(typeof flushDeferredSync==='function')flushDeferredSync()}
 
 // ---------- 错题重做页 ----------
 function poolRows(scope){var o=[];EBM.forEach(function(m){o=o.concat(errRows(m.k,scope==='all'?'all':'paper'))});return o}
@@ -1005,7 +1029,7 @@ function bindRedo(){$('q_pick').onclick=function(){$('q_files').click()};$('q_pi
  $('r_goPaper').onclick=function(){var p=$('r_paper').value;if(!p)return;startSession(sortRows(allPaperRows().filter(function(r){return r.src===p})),p+' · 本卷全部错题')};
  $('r_goMod').onclick=function(){var m=$('r_mod').value;startSession(sortRows(errRows(m,'paper')),modName(m)+' · 全部套卷错题')};
  document.addEventListener('click',onMark);
- document.addEventListener('keydown',function(e){if(!SES||SES.done||$('practice').style.display!=='block')return;if(/INPUT|TEXTAREA|SELECT/.test((e.target||{}).tagName||''))return;var k=e.key;var map={a:'A',b:'B',c:'C',d:'D','1':'A','2':'B','3':'C','4':'D'};
+ document.addEventListener('keydown',function(e){if(typeof qeditIsOpen==='function'&&qeditIsOpen()){if(e.key==='Escape'){qeditClose();e.preventDefault()}return}if(!SES||SES.done||$('practice').style.display!=='block')return;if(/INPUT|TEXTAREA|SELECT/.test((e.target||{}).tagName||''))return;var k=e.key;var map={a:'A',b:'B',c:'C',d:'D','1':'A','2':'B','3':'C','4':'D'};
   if(k==='Escape'&&cardIsOpen()){cardClose();e.preventDefault();return}if(map[k.toLowerCase()]){SES.ch[SES.cur]=map[k.toLowerCase()];renderQ();e.preventDefault()}else if(k==='ArrowRight'){goQ(SES.cur+1);e.preventDefault()}else if(k==='ArrowLeft'){goQ(SES.cur-1);e.preventDefault()}});
  window.addEventListener('beforeunload',function(e){if(SES&&!SES.done){e.preventDefault();e.returnValue=''}})}
 
@@ -1157,13 +1181,13 @@ function looksLikeToken(t){t=String(t||'').trim();return /^(ghp_|github_pat_|gho
 function localUpdatedAt(){return(S.meta&&(S.meta.updatedAt||S.meta.localAt))||''}
 function bumpSync(fast){if(QUIET)return;S.meta=S.meta||{};S.meta.updatedAt=new Date().toISOString();S.meta.localAt=S.meta.updatedAt;try{localStorage.setItem(P+'meta',JSON.stringify(S.meta))}catch(e){}setDirty(true);scheduleSync(fast)}
 function scheduleSync(fast){if(!getToken())return;if(fast)SYNC_FAST=true;var ms=SYNC_FAST?300:1500;if(SYNC_TIMER)clearTimeout(SYNC_TIMER);SYNC_TIMER=setTimeout(function(){SYNC_TIMER=null;SYNC_FAST=false;syncNow({trigger:'edit'})},ms)}
-function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
+function syncPack(){return{app:'行测成长记',version:3,updatedAt:localUpdatedAt()||new Date().toISOString(),settings:S.settings,papers:S.papers,errbooks:S.errbooks,ans:S.ans,redo:S.redo,marks:S.marks,mast:S.mast,qedit:S.qedit,meta:{lastBackup:(S.meta&&S.meta.lastBackup)||''}}}
 function dataScore(o){if(arguments.length===0)o=S;if(!o)return 0;if(o.data&&(o.papers==null))o=o.data;var n=(o.papers||[]).length+(Array.isArray(o.redo)?o.redo.length:0),eb=o.errbooks||o.errBooks||{};Object.keys(eb).forEach(function(m){var files=eb[m]||{};Object.keys(files).forEach(function(fn){n+=((files[fn]||{}).rows||[]).length})});return n}
-function hasUserData(p){if(!p)return false;if(dataScore(p)>0)return true;if((p.papers||[]).length||(Array.isArray(p.redo)&&p.redo.length))return true;if(p.marks&&p.marks.m&&typeof p.marks.m==='object'&&Object.keys(p.marks.m).length)return true;if(p.mast&&typeof p.mast==='object'&&Object.keys(p.mast).length)return true;return false}
-function lsUserPack(){try{function rd(k,d){var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}var meta=rd('meta',{})||{};return{app:'行测成长记',version:3,updatedAt:meta.updatedAt||meta.localAt||'',settings:rd('settings',null),papers:rd('papers',[]),errbooks:rd('errbooks',{}),ans:rd('ans',{}),redo:rd('redo',[]),marks:rd('marks',null),mast:rd('mast',{}),meta:{lastBackup:meta.lastBackup||''}}}catch(e){return null}}
+function hasUserData(p){if(!p)return false;if(dataScore(p)>0)return true;if((p.papers||[]).length||(Array.isArray(p.redo)&&p.redo.length))return true;if(p.marks&&p.marks.m&&typeof p.marks.m==='object'&&Object.keys(p.marks.m).length)return true;if(p.mast&&typeof p.mast==='object'&&Object.keys(p.mast).length)return true;if(p.qedit&&typeof p.qedit==='object'&&Object.keys(p.qedit).length)return true;return false}
+function lsUserPack(){try{function rd(k,d){var v=localStorage.getItem(P+k);return v?JSON.parse(v):d}var meta=rd('meta',{})||{};return{app:'行测成长记',version:3,updatedAt:meta.updatedAt||meta.localAt||'',settings:rd('settings',null),papers:rd('papers',[]),errbooks:rd('errbooks',{}),ans:rd('ans',{}),redo:rd('redo',[]),marks:rd('marks',null),mast:rd('mast',{}),qedit:rd('qedit',{}),meta:{lastBackup:meta.lastBackup||''}}}catch(e){return null}}
 function combineLocal(a,b){if(!hasUserData(a))return b||a;if(!hasUserData(b))return a||b;return mergePack(a,b)}
 function captureLocal(startPack){return combineLocal(combineLocal(startPack,syncPack()),lsUserPack())}
-function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
+function applyPack(d){QUIET=true;try{S.settings=normSettings(d.settings);S.papers=normPapers(d.papers);S.errbooks=normEb(d.errbooks||d.errBooks);S.ans=d.ans||{};S.redo=Array.isArray(d.redo)?d.redo:[];S.marks=normMarks(d.marks);S.mast=normObj(d.mast);S.qedit=normQedit(d.qedit);S.meta=S.meta||{};if(d.meta&&d.meta.lastBackup)S.meta.lastBackup=d.meta.lastBackup;S.meta.updatedAt=d.updatedAt||S.meta.updatedAt||'';S.meta.localAt=S.meta.updatedAt;saveAll()}finally{QUIET=false}}
 var SYNC_DEFER=false;
 function sessionBlocksPull(){return !!(SES&&!SES.done)}
 function loadSnaps(){try{var v=JSON.parse(lsGet(LS_SNAP)||'[]');return Array.isArray(v)?v.filter(function(x){return x&&x.pack&&typeof x.pack==='object'}):[]}catch(e){return []}}
@@ -1195,10 +1219,11 @@ function mergeErrbooks(newer,older){newer=newer||{};older=older||{};var out={},m
   Object.keys(files).forEach(function(fn){var nf=a[fn],of=b[fn];if(!nf)o[fn]=of;else if(!of)o[fn]=nf;else{var nr=(nf.rows||[]).length,orr=(of.rows||[]).length;if(nr&&!orr)o[fn]=nf;else if(orr&&!nr)o[fn]=of;else o[fn]=fileAt(nf)>=fileAt(of)?nf:of}});
   out[m]=o});return out}
 function mergeMeta(a,b){var la=(a&&a.lastBackup)||'',lb=(b&&b.lastBackup)||'';return{lastBackup:isoMax(la,lb)||''}}
+function mergeQedit(a,b){a=normQedit(a);b=normQedit(b);var o={},keys={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){keys[k]=1});Object.keys(keys).forEach(function(k){var x=a[k],y=b[k];if(!x)o[k]=y;else if(!y)o[k]=x;else o[k]=parseWhen(x.at)>=parseWhen(y.at)?x:y});return o}
 function mergePack(localPack,cloudPack){var lt=localPack&&localPack.updatedAt||'',ct=cloudPack&&cloudPack.updatedAt||'';
  var newer,older;if(ct&&(!lt||ct>lt)){newer=cloudPack;older=localPack}else{newer=localPack;older=cloudPack}
  newer=newer||{};older=older||{};
- return{app:'行测成长记',version:3,updatedAt:new Date().toISOString(),settings:newer.settings||older.settings,papers:mergePapers(newer.papers,older.papers),errbooks:mergeErrbooks(newer.errbooks||newer.errBooks,older.errbooks||older.errBooks),ans:mergeAns(newer.ans,older.ans),redo:mergeRedo(newer.redo,older.redo),marks:mergeMarks(newer.marks,older.marks),mast:unionMap(newer.mast,older.mast),meta:mergeMeta(newer.meta,older.meta)}}
+ return{app:'行测成长记',version:3,updatedAt:new Date().toISOString(),settings:newer.settings||older.settings,papers:mergePapers(newer.papers,older.papers),errbooks:mergeErrbooks(newer.errbooks||newer.errBooks,older.errbooks||older.errBooks),ans:mergeAns(newer.ans,older.ans),redo:mergeRedo(newer.redo,older.redo),marks:mergeMarks(newer.marks,older.marks),mast:unionMap(newer.mast,older.mast),qedit:mergeQedit(localPack&&localPack.qedit,cloudPack&&cloudPack.qedit),meta:mergeMeta(newer.meta,older.meta)}}
 function fmtSyncTime(iso){if(!iso)return'';var d=new Date(iso);if(isNaN(d.getTime()))return'';var n=new Date(),same=d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
  return same?d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function setSyncSt(ok,msg){SYNC_ST={ok:ok,msg:msg,at:new Date().toISOString()};var a=$('syncBar'),b=$('s_syncSt');if(a)a.innerHTML=syncBarHtml();if(b)b.innerHTML=syncStHtml();bindSyncBar()}
@@ -1278,7 +1303,7 @@ function bindSync(){if(!$('s_syncGo'))return;
  $('s_syncOff').onclick=function(){lsSet(LS_TOK,'');lsSet(LS_GIST,'');lsSet(LS_CLOUD,'');lsSet(LS_DIRTY,'');if($('s_syncTok'))$('s_syncTok').value='';setSyncSt(true,'已在本机断开同步。云端私有空间还在，本机数据也还在。重新粘贴同一把钥匙即可继续同步。');renderSync()};
  if($('s_syncRestore'))$('s_syncRestore').onclick=function(){renderSnapList(true)};
  if(!bindSync._ev){bindSync._ev=1;document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')maybeAuto('resume')});window.addEventListener('focus',function(){maybeAuto('resume')});window.addEventListener('online',function(){maybeAuto('online')})}}
-window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
+window.XG={go:go,exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_questionOf:questionOf,_qeditKey:qeditKey,_qeditOpen:qeditIsOpen,_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())}};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
