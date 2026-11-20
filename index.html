@@ -1020,11 +1020,14 @@ function renderRedoTab(){if(!$('t-redo'))return;
  [].forEach.call(document.querySelectorAll('[data-attdel]'),function(b){b.onclick=function(){if(confirm('删除这条重做记录？')){S.redo=S.redo.filter(function(x){return x.id!==b.dataset.attdel});save('redo');renderAll()}}});
  var marked=poolRows('all').filter(function(r){var m=mk(r.key);return m.s||(m.t&&m.t.length)});
  $('r_marked').innerHTML=marked.length?'<table><thead><tr><th>来源</th><th>模块</th><th>考点</th><th>错因</th><th>标记</th><th>掌握</th></tr></thead><tbody>'+sortRows(marked).map(function(r){return'<tr><td class="nw">'+esc(r.src||'—')+(r.q!=null?' 第'+r.q+'题':'')+'</td><td class="nw">'+modName(r.mod)+'</td><td>'+esc(r.kd)+'</td><td>'+esc(r.cause)+'</td><td>'+markHtml(r.key)+'</td><td>'+(mastered(r.key)?'<span class="tag okt">已掌握</span>':'')+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">在重做或套卷详情里点 ☆ 或标签即可标记错题</div>'}
+function srsInfo(){var h={};S.redo.forEach(function(a){var d=ymd(new Date(a.at||0));a.items.forEach(function(x){var e=h[x.key]||(h[x.key]={st:0,d:'',at:''});var ok=x.ans?(x.ch===x.ans&&!x.rev):(!!x.ch&&!x.rev);e.st=ok?e.st+1:0;e.d=d;e.at=a.at||''})});return h}
+function srsOrder(pool){var h=srsInfo(),td=today();var r=pool.map(function(x){var e=h[x.key];var due,gap,k;if(!e){due=true;k=0;gap=0}else{gap=e.st>=2?7:e.st===1?3:1;var dd=addDays(e.d,gap);due=dd<=td;k=e.at}return{x:x,due:due,k:k||'',r:Math.random()}});
+ r.sort(function(a,b){if(a.due!==b.due)return a.due?-1:1;if(a.due){var an=!a.k,bn=!b.k;if(an!==bn)return an?-1:1;return a.r-b.r}return a.k<b.k?-1:a.k>b.k?1:a.r-b.r});return r.map(function(o){return o.x})}
 function bindRedo(){$('q_pick').onclick=function(){$('q_files').click()};$('q_pickDir').onclick=function(){$('q_dir').click()};
  $('q_files').onchange=function(){importTxt($('q_files').files).then(function(){$('q_files').value=''})};$('q_dir').onchange=function(){importTxt($('q_dir').files).then(function(){$('q_dir').value=''})};
  ['g_scope','g_mod','g_kd','g_cause','g_tag','g_ex'].forEach(function(id){$(id).onchange=refreshGen});
  $('g_go').onclick=function(){var pool=filterPool();var n=Math.max(1,num($('g_n').value)||10);if(!pool.length){toast('没有符合条件的错题');return}
-  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t}pool=pool.slice(0,n);
+  pool=srsOrder(pool).slice(0,n);
   var md=$('g_mod').value;var lb='组卷：'+(md?modName(md.split('::')[0])+(md.split('::')[1]?'·'+md.split('::')[1]:''):'全部模块')+($('g_kd').value?' / '+$('g_kd').value:'')+($('g_cause').value?' / '+$('g_cause').value:'')+($('g_tag').value?' / '+$('g_tag').value:'')+' · '+pool.length+' 题';startSession(pool,lb)};
  $('r_goPaper').onclick=function(){var p=$('r_paper').value;if(!p)return;startSession(sortRows(allPaperRows().filter(function(r){return r.src===p})),p+' · 本卷全部错题')};
  $('r_goMod').onclick=function(){var m=$('r_mod').value;startSession(sortRows(errRows(m,'paper')),modName(m)+' · 全部套卷错题')};
