@@ -1061,12 +1061,14 @@ function fetchJson(url,ms){ms=ms||8000;var c=typeof AbortController!=='undefined
  return fetch(url,{signal:c?c.signal:undefined,cache:'default'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).finally(function(){if(t)clearTimeout(t)})}
 function fetchFirst(urls){var i=0;function next(){if(i>=urls.length)return Promise.reject(new Error('题库地址都无法访问'));var u=urls[i++];return fetchJson(u).catch(function(){return next()})}return next()}
 function unpackQb(data){var papers=data.papers||{},out=[];Object.keys(papers).forEach(function(name){var p=papers[name],qs={};Object.keys(p.q||{}).forEach(function(n){var r=p.q[n]||[];qs[n]={s:r[0]||'',o:r[1]||['','','',''],f:r[2]||'',mi:r[3]!=null?r[3]:-1}});out.push({name:name,file:'内置题库',qs:qs,mats:p.m||[],count:p.c||Object.keys(qs).length,figs:p.f||0,builtin:true,at:'内置'})});return{papers:out,ans:data.ans||{}}}
-function applyBuiltinAns(map){var ch=false;Object.keys(map||{}).forEach(function(p){var s=map[p];if(typeof s!=='string')return;for(var i=0;i<s.length;i++)if(s.charAt(i)!=='-'){S.ans[p]=S.ans[p]||{};if(!S.ans[p][i+1]){S.ans[p][i+1]=s.charAt(i);ch=true}}});if(ch){var q=QUIET;QUIET=true;save('ans');QUIET=q}}
+function applyBuiltinAns(map,force){var ch=false;Object.keys(map||{}).forEach(function(p){var s=map[p];if(typeof s!=='string')return;for(var i=0;i<s.length;i++)if(s.charAt(i)!=='-'){S.ans[p]=S.ans[p]||{};if(force?S.ans[p][i+1]!==s.charAt(i):!S.ans[p][i+1]){S.ans[p][i+1]=s.charAt(i);ch=true}}});if(ch){var q=QUIET;QUIET=true;save('ans');QUIET=q}}
 function missingBuiltin(data){var names=data&&data.papers?Object.keys(data.papers):[];if(!names.length){for(var i=1;i<=12;i++)names.push('套题'+i)}return names.filter(function(n){return!QB[n]})}
+var QB_VER=2;
 function loadBuiltinTiku(){if(!isHttp())return Promise.resolve({ok:false,reason:'file'});
- if(!missingBuiltin().length)return Promise.resolve({ok:true,cached:true});
+ var haveV=+(localStorage.getItem(P+'qb_builtin_v')||1),stale=haveV<QB_VER;
+ if(!missingBuiltin().length&&!stale)return Promise.resolve({ok:true,cached:true});
  var el=$('q_msg');if(el&&!el.textContent)el.textContent='正在加载内置题库…';
- return fetchFirst(tikuCandidates('tiku/qb.json')).then(function(data){var u=unpackQb(data);applyBuiltinAns(u.ans);var jobs=[],n=0;u.papers.forEach(function(pp){if(QB[pp.name]&&!QB[pp.name].builtin)return;if(QB[pp.name]&&QB[pp.name].builtin&&QB[pp.name].count>=pp.count)return;n++;jobs.push(qbPut(pp.name,pp))});
+ return fetchFirst(tikuCandidates('tiku/qb.json?v='+QB_VER)).then(function(data){var dv=+(data&&data.v||1),fresh=dv>haveV;var u=unpackQb(data);applyBuiltinAns(u.ans,fresh);var jobs=[],n=0;u.papers.forEach(function(pp){if(QB[pp.name]&&!QB[pp.name].builtin)return;if(!fresh&&QB[pp.name]&&QB[pp.name].builtin&&QB[pp.name].count>=pp.count)return;n++;jobs.push(qbPut(pp.name,pp))});if(dv>=QB_VER||fresh){try{localStorage.setItem(P+'qb_builtin_v',String(Math.max(dv,haveV)))}catch(e){}}
   return Promise.all(jobs).then(function(){if(el)el.innerHTML='✓ 已自动加载内置题库：1 期 '+Object.keys(QB).length+' 套。以后的套卷仍可用下方按钮导入。';return{ok:true,n:n}})}).catch(function(e){if(el)el.textContent='内置题库暂时没加载成功，请用下方按钮导入题库 txt。';return{ok:false,err:String(e&&e.message||e)}})}
 // ---------- 云端自动同步（GitHub Private Gist；钥匙只存在本机浏览器） ----------
 var SYNC_TIMER=null,SYNC_ST={msg:'',ok:null,at:''},SYNC_INFLIGHT=null,SYNC_QUEUED=false,SYNC_LAST_AUTO=0,SYNC_FAST=false;
