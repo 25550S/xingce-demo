@@ -257,16 +257,20 @@ button,a,.opt,nav button{touch-action:manipulation}
 .slot.occ .box{min-height:16px;border:1px dashed #c9cfee;background:#f6f7fc;color:var(--acc);font-size:11px;display:flex;align-items:center;padding:0 8px}
 .slot.task .box{min-height:0;padding:0;border:none;background:none}
 .slot.drop{outline:2px solid var(--acc);outline-offset:1px;border-radius:8px}
-.tblk{height:52px;box-sizing:border-box;display:grid;grid-template-columns:12px 1fr auto;grid-template-rows:1fr auto;column-gap:6px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px 6px 6px;position:relative;touch-action:none;cursor:grab;user-select:none}
+.tblk{min-height:52px;height:auto;box-sizing:border-box;display:grid;grid-template-columns:12px 1fr auto;grid-template-rows:1fr auto;column-gap:6px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px 6px 6px;position:relative;touch-action:none;cursor:grab;user-select:none}
 .tblk .hd{grid-row:1/3;display:grid;grid-template-columns:3px 3px;gap:2px 2.5px;align-content:center;justify-content:center;height:12px;opacity:.4}
 .tblk .hd i{width:3px;height:3px;border-radius:50%;background:#6b7078}
 .tblk .nm{font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tblk .meta{grid-column:2;grid-row:2;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mut);min-width:0;overflow:hidden;white-space:nowrap}
+.tblk .meta{grid-column:2;grid-row:2;display:flex;align-items:center;flex-wrap:wrap;gap:3px 5px;font-size:11px;color:var(--mut);min-width:0;line-height:1.35}
 .tblk .acts{grid-column:3;grid-row:1/3;display:flex;align-items:center;gap:2px}
 .tblk.trayb{height:48px;min-width:148px}
 .tblk.run{background:#fffaf2;border-color:#ead7b8}
+.tblk.pause{background:#f6f7fb;border-color:#d9dce8}
 .tblk.done .nm{color:var(--mut);text-decoration:line-through}
-.tblk .timer{font-variant-numeric:tabular-nums;color:#a8661c;font-weight:600;white-space:nowrap}
+.tblk .timer{font-variant-numeric:tabular-nums;color:#a8661c;font-weight:600;white-space:nowrap;flex:none}
+.tblk.pause .timer{color:#5c6578}
+.slot.pause .dot{background:#8b93b5}
+.tblk .acts .btn{flex:none}
 .tblk .bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#f0e6d4;overflow:hidden;border-radius:0 0 8px 8px}
 .tblk .bar i{display:block;height:100%;background:#d9a35a}
 .dt-ic{border:none;background:none;color:#a0a4aa;cursor:pointer;font-size:14px;padding:2px 3px;flex:none}.dt-ic:hover{color:var(--acc)}
@@ -294,7 +298,8 @@ button,a,.opt,nav button{touch-action:manipulation}
   .dt-head .seg button{padding:5px 10px}.fcard>:first-child{padding-right:70px}.foldb{top:14px;right:14px}
   #dtCard{overflow-x:visible}
   .dt-tray-row>h3{width:100%}
-  .tblk{height:56px}
+  .tblk{min-height:56px;height:auto}
+  .tblk .acts .btn,.tblk .acts .btn.sec{min-height:30px;padding:4px 8px;font-size:12px}
   .tblk .meta{flex-wrap:wrap}
   .tm-l{display:none}
 }
@@ -372,7 +377,7 @@ button,a,.opt,nav button{touch-action:manipulation}
       <div class="row dt-tpl"><span class="mut" style="font-size:12px">模板</span><button type="button" class="dt-chip" id="dt_tpl1">＋ 套卷 2h 高强度</button><button type="button" class="dt-chip" id="dt_tpl2">＋ 复盘 1h 轻松</button></div>
       <div class="dt-add" id="dtAdd"><input id="dt_n" placeholder="任务名称" class="dt-name"><select id="dt_k" aria-label="强度"><option value="hi">高强度</option><option value="lt">轻松</option><option value="rs">休息</option><option value="lk">错题组卷</option></select><span id="dt_lkBox" class="dt-lk" style="display:none"><select id="dt_lm" aria-label="模块"></select><input type="number" id="dt_ln" value="20" min="1" max="200" aria-label="题数"><span class="mut">题</span></span><input type="number" id="dt_dur" value="60" min="5" step="5" aria-label="耗时"><span class="mut">分钟</span><button type="button" class="btn" id="dt_addBtn">添加</button><button type="button" class="btn sec" id="dt_cancel" style="display:none">取消</button></div>
     </div>
-    <p class="mut" style="font-size:12px;margin:6px 0 0">拖到时间轴上安排，或点一下任务块选择开始时间。开始时间按 5 分钟对齐。</p>
+    <p class="mut" style="font-size:12px;margin:6px 0 0">拖到时间轴上安排，或点一下任务块选择开始时间。开始时间按 5 分钟对齐。开始后可以暂停，暂停期间不计时。</p>
     <div id="dtCols" class="dt-cols"></div>
     <div class="dt-lg mut" id="dtRule" style="margin-top:8px"></div>
     <div id="dtMask" class="dt-mask"></div>
@@ -1529,7 +1534,7 @@ function bindSync(){if(!$('s_syncGo'))return;
 // ---------- 当日任务 + 精力曲线 ----------
 var DEF_EN={idle:-2,lt:-5,hi:-10,rs:15,long:2,lowAt:30,lowX:1.5};
 var DT_TAG={hi:['高强度',''],lt:['轻松','lt'],rs:['休息','rs']};
-var DT_VIEW='t',DT_EDIT=null,DT_LINK=null,DT_TIMER=null,DT_DRAG=null,DT_POP_CB=null;
+var DT_VIEW='t',DT_EDIT=null,DT_LINK=null,DT_TIMER=null,DT_PAINT=null,DT_DRAG=null,DT_POP_CB=null;
 var DT_T0=360,DT_T1=1800,DT_COLS=[[360,840,'上午'],[840,1320,'下午'],[1320,1800,'夜晚']];
 function normEn(o){var s=Object.assign({},DEF_EN);o=o&&typeof o==='object'?o:{};Object.keys(DEF_EN).forEach(function(k){var v=num(o[k]);if(v!=null)s[k]=v});return s}
 function dtDur(t){var d=+t.dur||0;if(d>0)return Math.max(5,Math.round(d));var os=+t.os||0,oe=+t.oe||0;return Math.max(15,oe-os)}
@@ -1538,7 +1543,8 @@ function normTask(t){if(!t||typeof t!=='object'||!t.id)return null;
  var pl=t.pl===false||t.pl===0?false:(t.pl===true||t.pl===1?true:hasOs);
  var os=pl?+t.os:null;if(pl&&isFinite(os)&&os<DT_T0&&(t.pl==null)&&(t.oe==null||+t.oe<=DT_T0))os+=1440;
  if(pl&&!isFinite(os)){pl=false;os=null}
- var o={id:String(t.id),n:String(t.n||''),k:DT_TAG[t.k]?t.k:'hi',dur:dur,pl:pl,os:pl?os:null,oe:pl?os+dur:null,fx:!!t.fx,lk:t.lk&&typeof t.lk==='object'?{m:String(t.lk.m||''),n:Math.max(1,+t.lk.n||10)}:null,ext:+t.ext||0,ps:t.ps!=null?+t.ps:null,st:t.st!=null&&isFinite(+t.st)?+t.st:null,done:!!t.done,ds:t.ds!=null?+t.ds:null,de:t.de!=null?+t.de:null,at:t.at||'',del:!!t.del};
+ var el=t.el!=null&&t.el!==''&&isFinite(+t.el)?Math.max(0,+t.el):null,rk=t.rk!=null&&t.rk!==''&&isFinite(+t.rk)?+t.rk:null;
+ var o={id:String(t.id),n:String(t.n||''),k:DT_TAG[t.k]?t.k:'hi',dur:dur,pl:pl,os:pl?os:null,oe:pl?os+dur:null,fx:!!t.fx,lk:t.lk&&typeof t.lk==='object'?{m:String(t.lk.m||''),n:Math.max(1,+t.lk.n||10)}:null,ext:+t.ext||0,ps:t.ps!=null?+t.ps:null,st:t.st!=null&&isFinite(+t.st)?+t.st:null,pa:t.pa===true||t.pa===1,el:el,rk:rk,done:!!t.done,ds:t.ds!=null?+t.ds:null,de:t.de!=null?+t.de:null,at:t.at||'',del:!!t.del};
  return o}
 function normDay(d){var o={};d=d&&typeof d==='object'&&!Array.isArray(d)?d:{};var lim=addDays(today(),-30);Object.keys(d).forEach(function(k){if(!/^\d{4}-\d\d-\d\d$/.test(k)||k<lim)return;var m=d[k],x={};if(!m||typeof m!=='object')return;Object.keys(m).forEach(function(id){var t=normTask(m[id]);if(t)x[t.id]=t});if(Object.keys(x).length)o[k]=x});return o}
 function normUi(u){u=u&&typeof u==='object'?u:{};return{fold:u.fold&&typeof u.fold==='object'?u.fold:{},at:u.at||''}}
@@ -1557,15 +1563,30 @@ function dtClockToAbs(min){if(min==null)return null;return min<DT_T0?min+1440:mi
 function dtList(date){var m=(S.day||{})[date]||{};return Object.keys(m).map(function(id){return m[id]}).filter(function(t){return t&&!t.del})}
 function dtPlaced(tasks){return tasks.filter(function(t){return t.pl!==false&&t.os!=null})}
 function dtUnplaced(tasks){return tasks.filter(function(t){return t.pl===false||t.os==null})}
+// pa 暂停；el 已累计的进行中分钟（不含暂停）；rk 当前这一段开始的时刻（与 st 同一套分钟坐标）。暂停或完成后 rk 为空，用时不再增加。
+function dtPhase(t){if(!t||t.done)return 'done';if(t.pa)return 'pause';if(t.rk!=null)return 'run';if(t.st!=null&&t.el==null)return 'run';if(t.st!=null&&t.el!=null)return 'pause';return 'idle'}
+function dtElapsed(t,now){if(!t)return 0;var el=t.el!=null&&isFinite(+t.el)?+t.el:null;
+ if(t.done){if(el!=null)return Math.max(0,el);if(t.ds!=null&&t.de!=null)return Math.max(0,t.de-t.ds);return 0}
+ if(t.pa||(t.rk==null&&el!=null&&t.st!=null))return Math.max(0,el||0);
+ if(t.rk!=null&&now!=null)return Math.max(0,(el||0)+Math.max(0,now-t.rk));
+ if(el==null&&t.st!=null&&now!=null)return Math.max(0,now-t.st);
+ return Math.max(0,el||0)}
+function dtFreeze(t,now){if(!t||t.done)return;
+ if(t.pa){t.rk=null;if(t.el==null)t.el=0;return}
+ if(t.rk!=null&&now!=null){var base=t.el!=null&&isFinite(+t.el)?+t.el:0;t.el=Math.max(0,base+Math.max(0,now-t.rk));t.rk=null;return}
+ if(t.el==null&&t.st!=null&&now!=null){t.el=Math.max(0,now-t.st);return}
+ if(t.el==null)t.el=0}
+function dtFmtPlan(mins){var m=Math.max(0,Math.round(+mins||0));return Math.floor(m/60)+':'+pad(m%60)}
+function dtFmtEl(mins){var s=Math.max(0,Math.round((+mins||0)*60)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h+':'+pad(m)+':'+pad(sec)}
 function dtLayout(tasks,now){var list=dtPlaced(tasks).slice().sort(function(a,b){return a.os-b.os||(a.id<b.id?-1:1)});
  var sh=0,from=null;
  if(now!=null){for(var i=0;i<list.length;i++){var t=list[i];if(t.done||t.st!=null)continue;if(now>t.os){from=t.id;sh=now-t.os;break}}}
  var on=false,out=[];
- list.forEach(function(t){var dur=dtDur(t),s,e,dly=0,shift=0,run=false;
+ list.forEach(function(t){var dur=dtDur(t),s,e,dly=0,shift=0,phase=dtPhase(t),act=dtElapsed(t,now),run=false;
   if(t.done){s=t.ds!=null?t.ds:t.os;e=t.de!=null?t.de:s+dur;if(e<s)e=s+1;dly=Math.max(0,(e-s)-dur)}
-  else if(t.st!=null){s=t.st;e=s+dur;run=now!=null&&now>=s;if(now!=null&&now>e){dly=now-e;e=now}}
+  else if(phase==='run'||phase==='pause'){s=t.st!=null?t.st:(t.os!=null?t.os:0);e=s+Math.max(dur,act);if(!(e>s))e=s+1;run=phase==='run'&&now!=null&&now>=s;dly=Math.max(0,act-dur)}
   else{if(from&&(on||t.id===from)){on=true;shift=sh}s=t.os+shift;e=s+dur}
-  out.push({t:t,s:s,e:e,dur:dur,sh:shift,dly:dly,run:run,placed:true})});
+  out.push({t:t,s:s,e:e,dur:dur,sh:shift,dly:dly,run:run,phase:phase,act:act,placed:true})});
  return out}
 function dtTick(){return false}
 function dtRate(lay,m,cfg){var r=cfg.idle;for(var i=0;i<lay.length;i++){var x=lay[i];if(m>=x.s&&m<x.e){r=cfg[x.t.k];if(r<0&&m-x.s>=120)r-=cfg.long;break}}return r}
@@ -1612,36 +1633,44 @@ function dtTryPlace(date,t,s){s=dtClampS(s);var moves=dtPreviewPlace(date,t,s);d
 function dtTrySwap(date,a,b){var moves=dtPreviewSwap(date,a,b);dtAskPush(moves,function(mv){dtSwapWith(date,a,b,mv)})}
 function dtAskTime(date,t){var cur=t.pl!==false&&t.os!=null?t.os:840,hh=cur>=1440?cur-1440:cur,v=pad(Math.floor(hh/60)%24)+':'+pad(hh%60);
  dtPop('<h3>放到哪个时间？</h3><p class="mut">开始时间按 5 分钟对齐，范围 6:00–次日 6:00。0:00–5:59 算次日凌晨。</p><p><input type="time" id="dt_pt" value="'+v+'"></p><div class="dt-pop-btns"><button type="button" class="btn sec" data-dtn>取消</button><button type="button" class="btn" data-dty>确定</button></div>',function(){var m=pm($('dt_pt')?$('dt_pt').value:'');if(m==null){toast('请选择时间');return}dtTryPlace(date,t,dtClockToAbs(m))})}
-function dtStart(date,id,isT){var t=dtFind(date,id);if(!t||t.done)return;var now=Math.round(isT?dtNowAbs():(t.os!=null?t.os:DT_T0));
+function dtMarkDone(date,t,now,isT){var phase=dtPhase(t);
+ if(phase==='idle'){var x=dtLayout(dtList(date),isT?now:null).filter(function(y){return y.t.id===t.id})[0];t.done=true;if(t.st==null&&x)t.st=x.s;t.ds=t.st!=null?t.st:(x?x.s:Math.round(now));t.de=isT?Math.max(t.ds+1,Math.round(now)):(x?x.e:t.ds+dtDur(t));t.pa=false;t.rk=null;if(t.el==null)t.el=Math.max(0,t.de-t.ds);return}
+ dtFreeze(t,now);t.pa=false;t.rk=null;t.done=true;if(t.st==null)t.st=Math.round(now);t.ds=t.st!=null?Math.min(t.st,Math.round(now)):Math.round(now);var E=t.el!=null?t.el:0;t.el=E;t.de=t.ds+Math.max(1,E)}
+function dtStart(date,id,isT){var t=dtFind(date,id);if(!t||t.done)return;var precise=isT?dtNowAbs():(t.os!=null?t.os:DT_T0),now=Math.round(precise),phase=dtPhase(t);
+ if(phase==='run')return;
+ if(phase==='pause'){t.pa=false;t.rk=precise;if(t.el==null)t.el=0;if(t.st==null)t.st=now;dtPut(date,t);dtSave();renderDay();return}
  if(isT&&t.st==null&&t.os!=null&&now>t.os){var lay=dtLayout(dtList(date),now),sh=0;lay.forEach(function(x){if(x.t.id===t.id)sh=x.sh;if(sh&&x.sh&&!x.t.done&&x.t.st==null){x.t.os=x.s;x.t.oe=x.e;x.t.pl=true;dtPut(date,x.t)}})}
- t.st=now;t.pl=true;if(t.os==null){t.os=now;t.oe=now+dtDur(t)}dtPut(date,t);dtSave();
- if(t.lk&&isT)dtGo(date,id,true);else renderDay()}
-function dtCheck(date,id,isT){var t=dtFind(date,id);if(!t)return;var now=Math.round(isT?dtNowAbs():(t.os!=null?t.os:DT_T0));
- if(t.done){t.done=false;t.ds=null;t.de=null}
- else{var x=dtLayout(dtList(date),isT?dtNowAbs():null).filter(function(y){return y.t.id===t.id})[0];t.done=true;if(t.st==null&&x)t.st=x.s;t.ds=t.st!=null?t.st:(x?x.s:now);t.de=isT?Math.max(t.ds+1,now):(x?x.e:t.ds+dtDur(t))}
+ t.st=now;t.el=0;t.rk=precise;t.pa=false;t.pl=true;if(t.os==null){t.os=now;t.oe=now+dtDur(t)}dtPut(date,t);dtSave();
+ if(t.lk&&isT)dtGo(date,id);renderDay()}
+function dtPause(date,id,isT){var t=dtFind(date,id);if(!t||t.done||dtPhase(t)!=='run')return;var now=isT?dtNowAbs():(t.st!=null?t.st:DT_T0);
+ dtFreeze(t,now);t.pa=true;t.rk=null;dtPut(date,t);dtSave();renderDay()}
+function dtCheck(date,id,isT){var t=dtFind(date,id);if(!t)return;var now=isT?dtNowAbs():(t.os!=null?t.os:DT_T0);
+ if(t.done){t.done=false;t.ds=null;t.de=null;if(t.el!=null){t.pa=false;t.rk=now;if(t.st==null)t.st=Math.round(now)}}
+ else dtMarkDone(date,t,now,isT);
  dtPut(date,t);dtSave();renderDay()}
 function dtDel(date,id){var t=dtFind(date,id);if(!t)return;t.del=true;dtPut(date,t);dtSave();if(DT_EDIT&&DT_EDIT.id===id)dtCancelEdit();renderDay()}
-function dtMove(date,id){var t=dtFind(date,id);if(!t)return;var nd=addDays(date,1);var c=normTask(Object.assign({},t,{id:uid(),ext:0,ps:null,st:null,done:false,ds:null,de:null}));dtPut(nd,c);t.del=true;dtPut(date,t);dtSave();toast('已移到 '+nd.slice(5).replace('-','/'));renderDay()}
+function dtMove(date,id){var t=dtFind(date,id);if(!t)return;var nd=addDays(date,1);var c=normTask(Object.assign({},t,{id:uid(),ext:0,ps:null,st:null,pa:false,el:null,rk:null,done:false,ds:null,de:null}));dtPut(nd,c);t.del=true;dtPut(date,t);dtSave();toast('已移到 '+nd.slice(5).replace('-','/'));renderDay()}
 function dtGo(date,id){var t=dtFind(date,id);if(!t||!t.lk)return;var md=t.lk.m;var pool=poolRows('all').filter(function(r){if(md){var p=md.split('::');if(r.mod!==p[0])return false;if(p[1]&&r.grp!==p[1])return false}return!mastered(r.key)});
- if(!pool.length){toast('没有符合条件的错题（先导入错题本）');return}pool=srsOrder(pool).slice(0,t.lk.n);var st=Math.round(dtNowAbs());
+ if(!pool.length){toast('没有符合条件的错题（先导入错题本）');return}pool=srsOrder(pool).slice(0,t.lk.n);var precise=dtNowAbs(),st=Math.round(precise);
  var lb='组卷：'+(md?modName(md.split('::')[0])+(md.split('::')[1]?'·'+md.split('::')[1]:''):'全部模块')+' · '+pool.length+' 题';
- if(t.st==null){t.st=st;t.pl=true;if(t.os==null){t.os=st;t.oe=st+dtDur(t)}dtPut(date,t);dtSave()}
+ if(dtPhase(t)==='idle'){t.st=st;t.el=0;t.rk=precise;t.pa=false;t.pl=true;if(t.os==null){t.os=st;t.oe=st+dtDur(t)}dtPut(date,t);dtSave()}
  startSession(pool,lb);if(SES&&!SES.done)DT_LINK={d:date,id:id,sid:SES.id,st:st}}
-function dtOnSubmit(att){if(!DT_LINK||!att||att.id!==DT_LINK.sid)return;var L=DT_LINK,t=dtFind(L.d,L.id);DT_LINK=null;if(!t||t.done)return;var now=Math.round(dtNowAbs());t.done=true;t.ds=t.st!=null?Math.min(t.st,now):(t.os!=null?t.os:now);t.de=Math.max(t.ds+1,now);if(t.st==null)t.st=t.ds;dtPut(L.d,t);dtSave();toast('已自动完成当日任务');renderDay()}
+function dtOnSubmit(att){if(!DT_LINK||!att||att.id!==DT_LINK.sid)return;var L=DT_LINK,t=dtFind(L.d,L.id);DT_LINK=null;if(!t||t.done)return;dtMarkDone(L.d,t,dtNowAbs(),true);dtPut(L.d,t);dtSave();toast('已自动完成当日任务');renderDay()}
 function dtCancelEdit(){DT_EDIT=null;if($('dt_addBtn'))$('dt_addBtn').textContent='添加';if($('dt_cancel'))$('dt_cancel').style.display='none';if($('dt_n'))$('dt_n').value='';if($('dtAdd'))delete $('dtAdd').dataset.touched}
 function dtLkShow(){if($('dt_lkBox'))$('dt_lkBox').style.display=$('dt_k')&&$('dt_k').value==='lk'?'inline-flex':'none'}
 function dtAddTask(o){var D=dtDates(),date=DT_VIEW==='t'?D.t:D.m;var t=normTask(Object.assign({id:uid(),ext:0,done:false,pl:false},o));dtPut(date,t);dtSave();renderDay();return t}
 function dtTpl(n,k,min){dtAddTask({n:n,k:k,dur:min,pl:false,os:null});toast('已放到待放置，拖到时间轴上安排')}
-function dtBlk(x,isT,tray){var t=x.t||x,run=!!x.run,note='';
+function dtBlk(x,isT,tray){var t=x.t||x,phase=x.phase||dtPhase(t),run=phase==='run',paused=phase==='pause',E=x.act!=null?x.act:dtElapsed(t,x.now!=null?x.now:dtNowAbs()),note='';
  if(t.done&&x.dly>0)note='<span class="timer">超时 '+Math.round(x.dly)+' 分</span>';
- else if(run&&x.dly>0)note='<span class="timer">已超时 '+Math.round(x.dly)+' 分</span>';
- else if(run){var el=Math.max(0,Math.round((x.now!=null?x.now:dtNowAbs())-x.s));note='<span class="timer"><span class="tm-l">已开始 </span>'+Math.floor(el/60)+':'+pad(el%60)+' / '+Math.floor(x.dur/60)+':'+pad(x.dur%60)+'</span>'}
+ else if(run&&x.dly>0)note='<span class="timer" data-dtel="'+t.id+'">已超时 '+Math.round(x.dly)+' 分</span>';
+ else if(run)note='<span class="timer" data-dtel="'+t.id+'"><span class="tm-l">已开始 </span>'+dtFmtEl(E)+' / '+dtFmtPlan(x.dur||dtDur(t))+'</span>';
+ else if(paused)note='<span class="timer" data-dtel="'+t.id+'"><span class="tm-l">已暂停 </span>'+dtFmtEl(E)+' / '+dtFmtPlan(x.dur||dtDur(t))+'</span>';
  else if(x.sh>0)note='<span class="timer">后移 '+Math.round(x.sh)+' 分</span>';
- var nm=esc(dtName(t)),btn='';
- if(!tray&&isT&&!t.done){if(!run&&t.st==null)btn=t.lk?'<button type="button" class="btn sm" data-dtgo="'+t.id+'">开始</button>':'<button type="button" class="btn sm" data-dtst="'+t.id+'">开始</button>';else btn='<button type="button" class="btn sm" data-dtck="'+t.id+'">完成</button>'}
+ var nm=esc(dtName(t)),btn='',lead=(run||paused)?'':dtDurLabel(x.dur||dtDur(t));
+ if(!tray&&isT&&!t.done){if(phase==='idle')btn=t.lk?'<button type="button" class="btn sm" data-dtgo="'+t.id+'">开始</button>':'<button type="button" class="btn sm" data-dtst="'+t.id+'">开始</button>';else if(paused)btn='<button type="button" class="btn sm" data-dtst="'+t.id+'">继续</button><button type="button" class="btn sec sm" data-dtck="'+t.id+'">完成</button>';else btn='<button type="button" class="btn sec sm" data-dtpa="'+t.id+'">暂停</button><button type="button" class="btn sm" data-dtck="'+t.id+'">完成</button>'}
  else if(!tray&&t.done)btn='<button type="button" class="btn sec sm" data-dtck="'+t.id+'">撤销</button>';
- var pct=run&&x.dur?Math.min(100,Math.round(((x.now!=null?Math.min(x.e,x.now):x.s)-x.s)/x.dur*100)):0;
- return'<div class="tblk'+(tray?' trayb':'')+(run?' run':'')+(t.done?' done':'')+'" data-dtdrag="'+t.id+'" data-tray="'+(tray?'1':'0')+'"><span class="hd"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="nm">'+nm+'</span><span class="meta"><span class="dt-tg '+DT_TAG[t.k][1]+'">'+DT_TAG[t.k][0]+'</span> '+dtDurLabel(x.dur||dtDur(t))+note+'</span><span class="acts">'+btn+'<button type="button" class="dt-ic" data-dted="'+t.id+'" title="编辑">✎</button><button type="button" class="dt-ic" data-dtdel="'+t.id+'" title="删除">×</button></span>'+(run?'<span class="bar"><i style="width:'+pct+'%"></i></span>':'')+'</div>'}
+ var showBar=(run||paused)&&x.dur,pct=showBar?Math.min(100,Math.round(E/x.dur*100)):0;
+ return'<div class="tblk'+(tray?' trayb':'')+(run?' run':'')+(paused?' pause':'')+(t.done?' done':'')+'" data-dtdrag="'+t.id+'" data-tray="'+(tray?'1':'0')+'"><span class="hd"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="nm">'+nm+'</span><span class="meta"><span class="dt-tg '+DT_TAG[t.k][1]+'">'+DT_TAG[t.k][0]+'</span>'+(lead?' '+lead:'')+note+'</span><span class="acts">'+btn+'<button type="button" class="dt-ic" data-dted="'+t.id+'" title="编辑">✎</button><button type="button" class="dt-ic" data-dtdel="'+t.id+'" title="删除">×</button></span>'+(showBar?'<span class="bar"><i style="width:'+pct+'%"></i></span>':'')+'</div>'}
 function dtDurLabel(d){return d%60===0?(d/60)+' 小时':(d>60?Math.floor(d/60)+' 小时 '+(d%60)+' 分':d+' 分')}
 function dtColSlots(a,b,lay){var out=[],t=a,items=lay.filter(function(x){return x.s<b&&x.e>a}).sort(function(p,q){return p.s-q.s});
  while(t<b-1e-9){var hit=null,i,nx=b;
@@ -1655,7 +1684,7 @@ function renderDay(){var el=$('dtCard');if(!el)return;var D=dtDates(),isT=DT_VIE
  $('dtHead').innerHTML='<div class="row" style="gap:14px"><h2 style="margin:0">当日任务</h2><span class="seg" id="dt_tabs"><button data-dv="t" class="'+(isT?'on':'')+'">今天 '+D.t.slice(5).replace('-','/')+'</button><button data-dv="m" class="'+(isT?'':'on')+'">明天 '+D.m.slice(5).replace('-','/')+'（提前安排）</button></span></div><span class="mut dt-now">'+dtWd(date)+(isT?' · 现在 '+hm(now):' · 只显示计划')+'</span>';
  $('dtEnergy').innerHTML='<p class="mut" style="margin:0 0 4px">'+(isT?'当前精力':'起始精力（06:00）')+'</p><div><span class="dt-big">'+Math.round(isT?c.cur:100)+'</span><span class="mut"> / 100</span></div><p class="mut" style="margin:6px 0 0;font-size:12px">按计划，'+(isT?'今晚':'明晚')+' 24:00 预计剩 <b style="color:var(--txt)">'+Math.round(c.end)+'</b></p>';
  $('dtChart').innerHTML=dtChart(c,isT);
- var studied=0,dl=0,dn=0;lay.forEach(function(x){if(x.t.done)dn++;dl+=x.dly;if(x.t.k==='rs')return;if(x.t.done)studied+=x.e-x.s;else if(isT&&x.s<now)studied+=Math.max(0,Math.min(now,x.e)-x.s)});
+ var studied=0,dl=0,dn=0;lay.forEach(function(x){if(x.t.done)dn++;dl+=x.dly;if(x.t.k==='rs')return;if(x.t.done)studied+=x.e-x.s;else if(isT&&(x.run||x.phase==='pause'))studied+=x.act||0});
  var rd=dtTodayRedo(),plH=lay.reduce(function(a,x){return a+(x.t.k==='rs'?0:x.dur)},0);
  $('dtSum').innerHTML=isT?'<div><span>今日完成</span><b>'+dn+' / '+(lay.length+tray.length)+'</b></div><div><span>已学习</span><b>'+(Math.round(studied/6)/10)+' 小时</b></div><div><span>累计延迟</span><b'+(dl?' style="color:#a8661c"':'')+'>'+Math.round(dl)+' 分</b></div><div><span>今日做题</span><b>'+rd.n+' 题'+(rd.acc!=null?' · '+rd.acc+'%':'')+'</b></div>':'<div><span>计划任务</span><b>'+(lay.length+tray.length)+' 项</b></div><div><span>计划学习</span><b>'+(Math.round(plH/6)/10)+' 小时</b></div><div><span>24:00 预计精力</span><b>'+Math.round(c.end)+'</b></div><div><span>待放置</span><b>'+tray.length+' 项</b></div>';
  if($('dtOver'))$('dtOver').innerHTML='';
@@ -1664,12 +1693,18 @@ function renderDay(){var el=$('dtCard');if(!el)return;var D=dtDates(),isT=DT_VIE
  $('dtTray').innerHTML=tray.length?tray.map(function(t){return dtBlk({t:t,dur:dtDur(t),s:null,e:null,dly:0,sh:0,run:false},isT,true)}).join(''):'<span class="mut" style="font-size:12px">没有待放置的任务</span>';
  lay.forEach(function(x){x.now=isT?now:null});
  $('dtCols').innerHTML=DT_COLS.map(function(col){var a=col[0],b=col[1],on=isT&&now>=a&&now<b,slots=dtColSlots(a,b,lay);
-  var body=slots.map(function(sl){if(sl.type==='task')return'<div class="slot task'+(sl.x.run?' run':'')+'" data-dts="'+sl.s+'" data-dte="'+sl.e+'" data-dtid="'+sl.x.t.id+'"><div class="tm">'+hm(sl.s)+'<i>'+hm(sl.e)+'</i><span class="dot"></span></div><div class="box">'+dtBlk(sl.x,isT,false)+'</div></div>';
+  var body=slots.map(function(sl){if(sl.type==='task')return'<div class="slot task'+(sl.x.run?' run':(sl.x.phase==='pause'?' pause':''))+'" data-dts="'+sl.s+'" data-dte="'+sl.e+'" data-dtid="'+sl.x.t.id+'"><div class="tm">'+hm(sl.s)+'<i>'+hm(sl.e)+'</i><span class="dot"></span></div><div class="box">'+dtBlk(sl.x,isT,false)+'</div></div>';
    if(sl.type==='occ')return'<div class="slot occ" data-dts="'+sl.s+'" data-dte="'+sl.e+'"><div class="tm">'+hm(sl.s)+'<i>'+hm(sl.e)+'</i><span class="dot"></span></div><div class="box">'+(sl.x?esc(dtName(sl.x.t))+' 占用':'占用')+'</div></div>';
    return'<div class="slot '+sl.type+'" data-dts="'+sl.s+'" data-dte="'+sl.e+'"><div class="tm">'+hm(sl.s)+(sl.type==='gap'?'<i>'+hm(sl.e)+'</i>':'')+'<span class="dot"></span></div><div class="box">'+(sl.type==='idle'?'空闲':('空闲 '+Math.round(sl.e-sl.s)+' 分'))+'</div></div>'}).join('');
   return'<div class="dt-col'+(on?' on':'')+'"><h3>'+col[2]+'</h3><p class="rg">'+hm(a)+'–'+hm(b)+'</p>'+body+'</div>'}).join('');
  var lm=$('dt_lm');if(lm&&!lm.options.length)lm.innerHTML='<option value="">全部模块</option>'+EBM.map(function(m){return'<option value="'+m.k+'">'+m.n+'</option>'}).join('');
  bindDayDyn(date,isT);try{renderPet()}catch(e){}}
+function dtPaintTimers(){if(DT_DRAG||DT_VIEW!=='t')return;var date=dtDates().t,now=dtNowAbs();
+ [].forEach.call(document.querySelectorAll('[data-dtel]'),function(n){var t=dtFind(date,n.getAttribute('data-dtel'));if(!t||t.done)return;var dur=dtDur(t),E=dtElapsed(t,now),phase=dtPhase(t),dly=Math.max(0,E-dur);
+  if(phase==='run'&&dly>0)n.innerHTML='已超时 '+Math.round(dly)+' 分';
+  else if(phase==='run')n.innerHTML='<span class="tm-l">已开始 </span>'+dtFmtEl(E)+' / '+dtFmtPlan(dur);
+  else if(phase==='pause')n.innerHTML='<span class="tm-l">已暂停 </span>'+dtFmtEl(E)+' / '+dtFmtPlan(dur);
+  var blk=n.closest?n.closest('.tblk'):null,bar=blk&&blk.querySelector('.bar i');if(bar&&dur)bar.style.width=Math.min(100,Math.round(E/dur*100))+'%'})}
 function bindDay(){var A=$('dtAdd');if(!A)return;
  $('dt_k').onchange=dtLkShow;$('dt_cancel').onclick=function(){dtCancelEdit();renderDay()};
  $('dt_tpl1').onclick=function(){dtTpl('套卷','hi',120)};$('dt_tpl2').onclick=function(){dtTpl('复盘','lt',60)};
@@ -1679,11 +1714,13 @@ function bindDay(){var A=$('dtAdd');if(!A)return;
   dtAddTask(o);$('dt_n').value='';$('dt_dur').value='60';toast('已放到待放置')};
  if($('dtMask'))$('dtMask').onclick=function(){dtPopClose()};
  if(DT_TIMER)clearInterval(DT_TIMER);DT_TIMER=setInterval(function(){if($('t-home')&&$('t-home').classList.contains('on')&&!(S.ui.fold||{}).day)renderDay()},60000);
+ if(DT_PAINT)clearInterval(DT_PAINT);DT_PAINT=setInterval(function(){if($('t-home')&&$('t-home').classList.contains('on')&&!(S.ui.fold||{}).day)dtPaintTimers()},1000);
  dtBindPtr()}
 function bindDayDyn(date,isT){var el=$('dtCard');if(!el)return;
  [].forEach.call(el.querySelectorAll('[data-dv]'),function(b){b.onclick=function(){DT_VIEW=b.dataset.dv;if(DT_EDIT)dtCancelEdit();renderDay()}});
  [].forEach.call(el.querySelectorAll('[data-dtck]'),function(b){b.onclick=function(e){e.stopPropagation();dtCheck(date,b.dataset.dtck,isT)}});
  [].forEach.call(el.querySelectorAll('[data-dtst]'),function(b){b.onclick=function(e){e.stopPropagation();dtStart(date,b.dataset.dtst,isT)}});
+ [].forEach.call(el.querySelectorAll('[data-dtpa]'),function(b){b.onclick=function(e){e.stopPropagation();dtPause(date,b.dataset.dtpa,isT)}});
  [].forEach.call(el.querySelectorAll('[data-dtdel]'),function(b){b.onclick=function(e){e.stopPropagation();var t=dtFind(date,b.dataset.dtdel);if(t&&confirm('删除「'+dtName(t)+'」？'))dtDel(date,t.id)}});
  [].forEach.call(el.querySelectorAll('[data-dtmv]'),function(b){b.onclick=function(){dtMove(date,b.dataset.dtmv)}});
  [].forEach.call(el.querySelectorAll('[data-dtgo]'),function(b){b.onclick=function(e){e.stopPropagation();dtGo(date,b.dataset.dtgo)}});
@@ -1805,7 +1842,7 @@ function petTick(){if(!S.pet)return;var now=new Date(),was=function(k){return pe
  petRemDue(S.pet.rem,now,was).forEach(function(x){petMark(x.key,now);if(x.r.rep==='once'){x.r.on=false;x.r.at=now.toISOString();petSave()}fired.push(x.key);var tx=fillL(x.r.txt||'到时间啦。');petPop(tx,{st:3,notify:true,btns:[['好的'],['晚 10 分钟',function(){petSnooze(tx,600000);toast('10 分钟后再提醒你')}]]})});
  snoozeDue(now.getTime()).forEach(function(x){fired.push('snz');petPop(x.txt,{st:3,notify:true,btns:[['好的'],['晚 10 分钟',function(){petSnooze(x.txt,600000)}]]})});
  var t=today(),c=dtCalc(t,true);
- if(sm.study.on){c.lay.forEach(function(x){if(!x.run||x.t.k==='rs')return;var mins=Math.floor(m-x.s),N=+sm.study.n||90,k='study|'+x.t.id+'|'+Math.floor(mins/N);if(mins>=N&&!was(k)){petMark(k,now);fired.push(k);petPop(petPick('study',{m:Math.floor(mins/N)*N}),{st:1,notify:true})}})}
+ if(sm.study.on){c.lay.forEach(function(x){if(!x.run||x.t.k==='rs')return;var mins=Math.floor(x.act!=null?x.act:(m-x.s)),N=+sm.study.n||90,k='study|'+x.t.id+'|'+Math.floor(mins/N);if(mins>=N&&!was(k)){petMark(k,now);fired.push(k);petPop(petPick('study',{m:Math.floor(mins/N)*N}),{st:1,notify:true})}})}
  if(sm.low.on&&m>=360&&c.cur<(+sm.low.n||30)){var k2='low|'+Math.floor(now.getHours()/2);if(!was(k2)){petMark(k2,now);fired.push(k2);petPop(petPick('low',{e:Math.round(c.cur)}),{st:c.cur<20?0:1,notify:true})}}
  if(sm.delay.on)c.lay.forEach(function(x){if(x.t.done||x.t.ext<(+sm.delay.n||60))return;var k='delay|'+x.t.id;if(was(k))return;petMark(k,now);fired.push(k);var id=x.t.id;petPop(petPick('delay',{t:x.t.n||'任务',m:x.t.ext}),{st:1,notify:true,btns:[['移到明天',function(){dtMove(t,id)}],['再坚持一下']]})});
  if(sm.sum.on){var ts=pm(sm.sum.t);if(ts!=null&&m>=ts&&m<=ts+60&&!was('sum')){petMark('sum',now);fired.push('sum');petPop(petSummary(),{st:3,notify:true})}}
@@ -1890,7 +1927,7 @@ function bindPetCfg(){if(!$('pet_call'))return;var c=function(){return petC()};
  try{if(window.speechSynthesis)speechSynthesis.onvoiceschanged=function(){renderPetCfg()}}catch(e){}
  ['pointerdown','keydown'].forEach(function(ev){document.addEventListener(ev,petUnlock,{capture:true,passive:true})})}
 var _rDue=renderDue,_rFoc=renderFocus;renderDue=function(){_rDue();applyFold()};renderFocus=function(){_rFoc();applyFold()};
-window.XG={go:go,_dt:{layout:dtLayout,tick:dtTick,energy:dtEnergy,calc:dtCalc,merge:mergeDay,norm:normDay,normTask:normTask,list:dtList,placed:dtPlaced,unplaced:dtUnplaced,check:dtCheck,start:dtStart,place:dtPlaceAt,tryPlace:dtTryPlace,trySwap:dtTrySwap,push:dtPushLater,previewPlace:dtPreviewPlace,previewSwap:dtPreviewSwap,snap:dtSnap,dur:dtDur,slots:dtColSlots,dates:dtDates,now:dtNowAbs,go:dtGo,render:renderDay,view:function(v){DT_VIEW=v;renderDay()},link:function(){return DT_LINK}},_pet:{pick:petPick,data:petData,stats:petStats,due:petRemDue,repOk:repOk,tick:petTick,snooze:petSnooze,snoozeDue:snoozeDue,merge:mergePet,mergeMood:mergeMood,norm:normPet,mood:petMood,state:petState,pop:petPop,summary:petSummary,greet:petGreet,progress:petProgress,quiet:petQuiet,focus:focusStart,onSubmit:petOnSubmit,was:petWas,celebrate:petCelebrate},exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_questionOf:questionOf,_qeditKey:qeditKey,_qeditOpen:qeditIsOpen,_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())},_gkName:gkName,_migrateGk:migrateGkPack,_migrateGkQb:migrateGkQb};
+window.XG={go:go,_dt:{layout:dtLayout,tick:dtTick,energy:dtEnergy,calc:dtCalc,merge:mergeDay,norm:normDay,normTask:normTask,list:dtList,placed:dtPlaced,unplaced:dtUnplaced,check:dtCheck,start:dtStart,pause:dtPause,phase:dtPhase,elapsed:dtElapsed,place:dtPlaceAt,tryPlace:dtTryPlace,trySwap:dtTrySwap,push:dtPushLater,previewPlace:dtPreviewPlace,previewSwap:dtPreviewSwap,snap:dtSnap,dur:dtDur,slots:dtColSlots,dates:dtDates,now:dtNowAbs,go:dtGo,render:renderDay,view:function(v){DT_VIEW=v;renderDay()},link:function(){return DT_LINK}},_pet:{pick:petPick,data:petData,stats:petStats,due:petRemDue,repOk:repOk,tick:petTick,snooze:petSnooze,snoozeDue:snoozeDue,merge:mergePet,mergeMood:mergeMood,norm:normPet,mood:petMood,state:petState,pop:petPop,summary:petSummary,greet:petGreet,progress:petProgress,quiet:petQuiet,focus:focusStart,onSubmit:petOnSubmit,was:petWas,celebrate:petCelebrate},exportNow:function(){doExport()},_redo:function(){return SES},_QB:function(){return QB},_questionOf:questionOf,_qeditKey:qeditKey,_qeditOpen:qeditIsOpen,_parsePaperTxt:parsePaperTxt,_ansOf:ansOf,_mastered:mastered,_pkg:buildPkg,_summary:buildSummary,_start:startSession,_ink:function(){return SES&&SES.ink},_isDue:isDue,_dueList:dueList,_mastInfo:mastInfo,_setMastered:setMastered,_perfRows:perfRows,_deduction:deduction,_S:function(){return S},_dim:dimScore,_paperScore:paperScore,_modCorrect:modCorrect,_unreg:unregistered,_rows:allPaperRows,_level:level,_loadBuiltin:loadBuiltinTiku,_isHttp:isHttp,_syncNow:function(o){return syncNow(o||{trigger:'manual'})},_syncSt:function(){return SYNC_ST},_syncPack:syncPack,_mergePack:mergePack,_dataScore:dataScore,_allowAutoSync:function(){SYNC_LAST_AUTO=0},_getGistId:function(){return getGistId()},_isDirty:function(){return isDirty()},_listSnaps:function(){return loadSnaps()},_restoreSnap:function(i){return restoreSnap(i)},_savePresyncSnap:function(r){return savePresyncSnap(r)},_hasUserData:function(p){return hasUserData(p||syncPack())},_gkName:gkName,_migrateGk:migrateGkPack,_migrateGkQb:migrateGkQb};
 document.addEventListener('DOMContentLoaded',function(){init();
  [].forEach.call(document.querySelectorAll('#nav button'),function(b){b.onclick=function(){go(b.dataset.t)}});
  renderPaperForm(null);$('p_save').onclick=savePaper;$('p_cancel').onclick=function(){editing=null;renderPaperForm(null)};
