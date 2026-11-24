@@ -837,6 +837,22 @@ function renderHome(){var lv=level();
  var bd=backupDays();var has=S.papers.length||EBM.some(function(m){return hasEb(m.k)})||(S.redo&&S.redo.length);
  $('backupBanner').innerHTML=has&&(bd==null||bd>=7)?'<div class="banner strong"><div><b>'+(bd==null?'你还没有备份过数据':'已经 '+bd+' 天没有备份了')+'</b><div>数据只存在这个浏览器里。点右边按钮下载备份文件，然后把它拖进 OneDrive 的「行测成长记」文件夹。</div></div><button class="btn" onclick="XG.exportNow()">立即导出备份</button></div>':(has?'<p class="mut" style="margin:-8px 0 14px">上次备份：'+(bd===0?'今天':bd+' 天前')+'</p>':'')}
 
+// ---------- 列表分页（每页 10 行；不足一页不显示。页码只留在内存里） ----------
+var listPage={qb:1,redo:1,papers:1};
+function pageSlice(list,page,size){
+ var n=(list&&list.length)||0,sz=+size>0?Math.floor(+size):10,pages=n?Math.ceil(n/sz):1,p=Math.floor(+page);
+ if(!(p>=1))p=1;if(p>pages)p=pages;
+ var start=(p-1)*sz;
+ return{page:p,pages:pages,start:start,rows:list&&n?list.slice(start,start+sz):[],show:n>sz};
+}
+function pagerBar(key,info){
+ if(!info||!info.show)return'';
+ var prev=info.page<=1?' disabled':'',next=info.page>=info.pages?' disabled':'';
+ return'<div class="row pgbar" style="margin-top:10px;gap:8px"><button class="btn sec sm" data-pg="'+key+'" data-pages="'+info.pages+'" data-dir="-1"'+prev+'>上一页</button><span class="mut">· 第 '+info.page+' / '+info.pages+' 页 ·</span><button class="btn sec sm" data-pg="'+key+'" data-pages="'+info.pages+'" data-dir="1"'+next+'>下一页</button></div>';
+}
+function usePage(key,list){var info=pageSlice(list,listPage[key],10);listPage[key]=info.page;return info}
+function bindPager(root){if(!root)return;[].forEach.call(root.querySelectorAll('[data-pg]'),function(b){b.onclick=function(){if(b.disabled)return;var k=b.getAttribute('data-pg'),p=(listPage[k]||1)+(+b.getAttribute('data-dir')||0),n=+b.getAttribute('data-pages')||1;if(p<1)p=1;if(p>n)p=n;if(p===listPage[k])return;listPage[k]=p;if(k==='papers')renderPapers();else renderRedoTab()}})}
+
 // ---------- 套卷 ----------
 var editing=null,detailId=null;
 function formPaperObj(){var o={name:$('p_name').value.trim(),mods:{}};MODS.forEach(function(m){var man=$('pm_m_'+m.k).checked;o.mods[m.k]={t:num($('pm_t_'+m.k).value)||0,s:num($('pm_s_'+m.k).value)||0,man:man?num($('pm_c_'+m.k).value):null}});return o}
@@ -867,15 +883,16 @@ function quickRegister(name){var u=unregistered().filter(function(x){return x.na
 function renderPapers(){var u=unregistered();
  $('unregList').innerHTML=u.length?'<p class="mut">这些名称出现在错题本「来源」中（已排除专项），点按钮即用默认题量登记，之后补填没有错题本的模块。</p><div class="chips">'+u.map(function(x){return'<span class="chip">'+esc(x.name)+' <span class="mut">'+x.n+' 道错题</span><button class="btn sm" data-reg="'+esc(x.name)+'">登记这套卷</button></span>'}).join('')+'</div>':'<div class="empty">'+(allPaperRows().length?'错题本里的套卷都已登记':'导入错题本后，这里会列出还没登记的套卷')+'</div>';
  [].forEach.call(document.querySelectorAll('[data-reg]'),function(b){b.onclick=function(){quickRegister(b.dataset.reg)}});
- var ps=sortedPapers(true);
- $('paperList').innerHTML=ps.length?'<table><thead><tr><th>日期</th><th>套卷</th>'+MODS.map(function(m){return'<th>'+m.n+'</th>'}).join('')+'<th>总分</th><th></th></tr></thead><tbody>'+ps.map(function(p){var sc=paperScore(p);
+ var ps=sortedPapers(true),ppPg=usePage('papers',ps);
+ $('paperList').innerHTML=ps.length?'<table><thead><tr><th>日期</th><th>套卷</th>'+MODS.map(function(m){return'<th>'+m.n+'</th>'}).join('')+'<th>总分</th><th></th></tr></thead><tbody>'+ppPg.rows.map(function(p){var sc=paperScore(p);
   return'<tr'+(p.id===detailId?' class="sel"':'')+'><td class="mut">'+p.date+'</td><td><b>'+esc(p.name)+'</b>'+(p.file?'<div class="mut">'+esc(p.file)+'</div>':'')+'</td>'+MODS.map(function(m){var c=modCorrect(p,m.k);
    if(c.state==='skip')return'<td class="mut">—</td>';if(c.state==='unknown')return'<td><span class="hint">待填</span></td>';
    return'<td>'+c.c+'/'+c.t+' <span class="mut">'+Math.round(c.c/c.t*100)+'%</span><span class="tag '+c.state+'">'+(c.state==='auto'?'自动':'手动')+'</span></td>'}).join('')+
-   '<td><b>'+(sc.complete?sc.total:'<span class="hint">待补全</span>')+'</b></td><td style="white-space:nowrap"><button class="btn sec sm" data-det="'+p.id+'">详情</button> <button class="btn sec sm" data-edit="'+p.id+'">编辑</button> <button class="btn red sm" data-delp="'+p.id+'">删除</button></td></tr>'}).join('')+'</tbody></table>':'<div class="empty">还没有登记套卷</div>';
+   '<td><b>'+(sc.complete?sc.total:'<span class="hint">待补全</span>')+'</b></td><td style="white-space:nowrap"><button class="btn sec sm" data-det="'+p.id+'">详情</button> <button class="btn sec sm" data-edit="'+p.id+'">编辑</button> <button class="btn red sm" data-delp="'+p.id+'">删除</button></td></tr>'}).join('')+'</tbody></table>'+pagerBar('papers',ppPg):'<div class="empty">还没有登记套卷</div>';
  [].forEach.call(document.querySelectorAll('[data-det]'),function(b){b.onclick=function(){detailId=b.dataset.det;renderPapers();$('detailCard').scrollIntoView({behavior:'smooth'})}});
  [].forEach.call(document.querySelectorAll('[data-edit]'),function(b){b.onclick=function(){editing=b.dataset.edit;renderPaperForm(S.papers.filter(function(x){return x.id===editing})[0]);$('paperFormCard').scrollIntoView({behavior:'smooth'})}});
  [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){b.onclick=function(){if(!confirm('删除这套卷的登记？（不影响错题本）'))return;S.papers=S.papers.filter(function(x){return x.id!==b.dataset.delp});if(detailId===b.dataset.delp)detailId=null;save('papers',true);renderAll()}});
+ bindPager($('paperList'));
  renderDetail()}
 function renderDetail(){var p=S.papers.filter(function(x){return x.id===detailId})[0];var c=$('detailCard');if(!p){c.style.display='none';return}c.style.display='';
  var rows=allPaperRows().filter(function(r){return r.src===p.name}).sort(function(a,b){return(a.q||999)-(b.q||999)});var sc=paperScore(p);
@@ -1231,20 +1248,21 @@ function refreshGen(){if(!$('g_mod'))return;var scope=$('g_scope').value,md=$('g
  var n=filterPool().length;$('g_count').textContent='符合条件 '+n+' 道';}
 function renderRedoTab(){if(!$('t-redo'))return;
  var names={};Object.keys(QB).forEach(function(k){names[k]=1});Object.keys(EMB_ANS).forEach(function(k){names[k]=1});Object.keys(S.ans).forEach(function(k){names[k]=1});
- var list=Object.keys(names).sort(nat);
- $('q_status').innerHTML='<p class="mut">题库保存在本浏览器的 '+(IDB_OK?'IndexedDB':'localStorage')+' 中。已有题目 '+Object.keys(QB).length+' 套。'+(isHttp()?' 用网页打开时会自动加载题库（含 1 期 12 套和国考真题）。':' 从文件打开时，请用下方按钮导入「1/题库」文件夹。')+'</p><table><thead><tr><th>套卷</th><th>分组</th><th>题目</th><th>含图</th><th>答案</th><th></th></tr></thead><tbody>'+list.map(function(k){var b=QB[k];var ai=S.ans[k]?Object.keys(S.ans[k]).filter(function(n){return S.ans[k][n]&&S.ans[k][n]!=='-'}).length:0;var ae=EMB_ANS[k]?EMB_ANS[k].replace(/-/g,'').length:0;
-  return'<tr><td><b>'+esc(k)+'</b></td><td class="mut">'+(b&&b.g?esc(b.g):'—')+'</td><td>'+(b?b.count+' 题 <span class="mut">'+esc(b.builtin?'内置题库':(b.file||''))+'</span>':'<span class="hint">未导入</span>')+'</td><td>'+(b?b.figs:'—')+'</td><td>'+(ai?ai+' 题（已导入）':ae?ae+' 题（内置）':'<span class="hint">无（请在错题本填写正确选项）</span>')+'</td><td>'+(b?'<button class="btn red sm" data-qdel="'+esc(k)+'">删除题目</button>':'')+'</td></tr>'}).join('')+'</tbody></table>';
+ var list=Object.keys(names).sort(nat),qbPg=usePage('qb',list);
+ $('q_status').innerHTML='<p class="mut">题库保存在本浏览器的 '+(IDB_OK?'IndexedDB':'localStorage')+' 中。已有题目 '+Object.keys(QB).length+' 套。'+(isHttp()?' 用网页打开时会自动加载题库（含 1 期 12 套和国考真题）。':' 从文件打开时，请用下方按钮导入「1/题库」文件夹。')+'</p><table><thead><tr><th>套卷</th><th>分组</th><th>题目</th><th>含图</th><th>答案</th><th></th></tr></thead><tbody>'+qbPg.rows.map(function(k){var b=QB[k];var ai=S.ans[k]?Object.keys(S.ans[k]).filter(function(n){return S.ans[k][n]&&S.ans[k][n]!=='-'}).length:0;var ae=EMB_ANS[k]?EMB_ANS[k].replace(/-/g,'').length:0;
+  return'<tr><td><b>'+esc(k)+'</b></td><td class="mut">'+(b&&b.g?esc(b.g):'—')+'</td><td>'+(b?b.count+' 题 <span class="mut">'+esc(b.builtin?'内置题库':(b.file||''))+'</span>':'<span class="hint">未导入</span>')+'</td><td>'+(b?b.figs:'—')+'</td><td>'+(ai?ai+' 题（已导入）':ae?ae+' 题（内置）':'<span class="hint">无（请在错题本填写正确选项）</span>')+'</td><td>'+(b?'<button class="btn red sm" data-qdel="'+esc(k)+'">删除题目</button>':'')+'</td></tr>'}).join('')+'</tbody></table>'+pagerBar('qb',qbPg);
  [].forEach.call(document.querySelectorAll('[data-qdel]'),function(b){b.onclick=function(){if(confirm('删除「'+b.dataset.qdel+'」的题目？'))qbDel(b.dataset.qdel).then(renderAll)}});
  var mo='<option value="">全部模块</option>';EBM.forEach(function(m){mo+='<option value="'+m.k+'">'+m.n+'</option>';var gs=[];Object.keys(S.errbooks[m.k]).forEach(function(fn){var g=grpOf(m.k,fn);if(gs.indexOf(g)<0)gs.push(g)});if(gs.length>1)gs.forEach(function(g){mo+='<option value="'+m.k+'::'+esc(g)+'">　'+m.n+' · '+esc(g)+'</option>'})});
  var mv=$('g_mod').value;$('g_mod').innerHTML=mo;$('g_mod').value=mv;refreshGen();
  var pmo=EBM.map(function(m){return'<option value="'+m.k+'">'+m.n+'（'+errRows(m.k,'paper').length+'）</option>'}).join('');$('r_mod').innerHTML=pmo;
  var pn={};allPaperRows().forEach(function(r){if(r.src)pn[r.src]=(pn[r.src]||0)+1});var pv=$('r_paper').value;$('r_paper').innerHTML=Object.keys(pn).sort(nat).map(function(k){return'<option value="'+esc(k)+'">'+esc(k)+'（'+pn[k]+' 道）</option>'}).join('');if(pv)$('r_paper').value=pv;
- var hs=S.redo.slice().reverse();
- $('r_hist').innerHTML=hs.length?'<table><thead><tr><th>时间</th><th>范围</th><th>题数</th><th>正确率</th><th>用时</th><th></th></tr></thead><tbody>'+hs.map(function(a){return'<tr><td class="mut nw">'+new Date(a.at).toLocaleString('zh-CN')+'</td><td>'+esc(a.label)+'</td><td>'+a.n+'</td><td><b>'+(a.graded?Math.round(a.cor/a.graded*1000)/10+'%':'—')+'</b> <span class="mut">'+a.cor+'/'+a.graded+'</span></td><td>'+fmt(a.time)+'</td><td class="nw"><button class="btn sec sm" data-att="'+a.id+'">查看</button> <button class="btn red sm" data-attdel="'+a.id+'">删除</button></td></tr>'}).join('')+'</tbody></table>':'<div class="empty">还没有重做记录</div>';
+ var hs=S.redo.slice().reverse(),rdPg=usePage('redo',hs);
+ $('r_hist').innerHTML=hs.length?'<table><thead><tr><th>时间</th><th>范围</th><th>题数</th><th>正确率</th><th>用时</th><th></th></tr></thead><tbody>'+rdPg.rows.map(function(a){return'<tr><td class="mut nw">'+new Date(a.at).toLocaleString('zh-CN')+'</td><td>'+esc(a.label)+'</td><td>'+a.n+'</td><td><b>'+(a.graded?Math.round(a.cor/a.graded*1000)/10+'%':'—')+'</b> <span class="mut">'+a.cor+'/'+a.graded+'</span></td><td>'+fmt(a.time)+'</td><td class="nw"><button class="btn sec sm" data-att="'+a.id+'">查看</button> <button class="btn red sm" data-attdel="'+a.id+'">删除</button></td></tr>'}).join('')+'</tbody></table>'+pagerBar('redo',rdPg):'<div class="empty">还没有重做记录</div>';
  [].forEach.call(document.querySelectorAll('[data-att]'),function(b){b.onclick=function(){showAttempt(b.dataset.att)}});
  [].forEach.call(document.querySelectorAll('[data-attdel]'),function(b){b.onclick=function(){if(confirm('删除这条重做记录？')){S.redo=S.redo.filter(function(x){return x.id!==b.dataset.attdel});save('redo');renderAll()}}});
  var marked=poolRows('all').filter(function(r){var m=mk(r.key);return m.s||(m.t&&m.t.length)});
- $('r_marked').innerHTML=marked.length?'<table><thead><tr><th>来源</th><th>模块</th><th>考点</th><th>错因</th><th>标记</th><th>掌握</th></tr></thead><tbody>'+sortRows(marked).map(function(r){return'<tr><td class="nw">'+esc(r.src||'—')+(r.q!=null?' 第'+r.q+'题':'')+'</td><td class="nw">'+modName(r.mod)+'</td><td>'+esc(r.kd)+'</td><td>'+esc(r.cause)+'</td><td>'+markHtml(r.key)+'</td><td>'+(mastered(r.key)?'<span class="tag okt">已掌握</span>':'')+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">在重做或套卷详情里点 ☆ 或标签即可标记错题</div>'}
+ $('r_marked').innerHTML=marked.length?'<table><thead><tr><th>来源</th><th>模块</th><th>考点</th><th>错因</th><th>标记</th><th>掌握</th></tr></thead><tbody>'+sortRows(marked).map(function(r){return'<tr><td class="nw">'+esc(r.src||'—')+(r.q!=null?' 第'+r.q+'题':'')+'</td><td class="nw">'+modName(r.mod)+'</td><td>'+esc(r.kd)+'</td><td>'+esc(r.cause)+'</td><td>'+markHtml(r.key)+'</td><td>'+(mastered(r.key)?'<span class="tag okt">已掌握</span>':'')+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">在重做或套卷详情里点 ☆ 或标签即可标记错题</div>';
+ bindPager($('t-redo'))}
 function srsInfo(){var h={};S.redo.forEach(function(a){var d=ymd(new Date(a.at||0));a.items.forEach(function(x){var e=h[x.key]||(h[x.key]={st:0,d:'',at:''});var ok=x.ans?(x.ch===x.ans&&!x.rev):(!!x.ch&&!x.rev);e.st=ok?e.st+1:0;e.d=d;e.at=a.at||''})});return h}
 function srsOrder(pool){var h=srsInfo(),td=today();var r=pool.map(function(x){var e=h[x.key];var due,gap,k;if(!e){due=true;k=0;gap=0}else{gap=e.st>=2?7:e.st===1?3:1;var dd=addDays(e.d,gap);due=dd<=td;k=e.at}return{x:x,due:due,k:k||'',r:Math.random()}});
  r.sort(function(a,b){if(a.due!==b.due)return a.due?-1:1;if(a.due){var an=!a.k,bn=!b.k;if(an!==bn)return an?-1:1;return a.r-b.r}return a.k<b.k?-1:a.k>b.k?1:a.r-b.r});return r.map(function(o){return o.x})}
